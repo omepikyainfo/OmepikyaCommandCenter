@@ -115,7 +115,14 @@ public final class ExecutionCoordinator {
 
         try {
 
-            token.throwIfCancelled();
+            // A token may already be cancelled before execution starts.
+            // Return a terminal result instead of leaking the cancellation
+            // exception before the executor's guarded section.
+            if (token.isCancelled()) {
+                return finishCancelled(
+                        trace,
+                        token.getReason());
+            }
 
             if (context == null) {
 
