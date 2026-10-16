@@ -39,7 +39,6 @@ def main() -> None:
     model = OmepikyaTiny(len(tokenizer.characters), seed=args.seed,
                          learning_rate=args.learning_rate)
     inputs, targets = train_ids[:-1], train_ids[1:]
-    rng = np.random.default_rng(args.seed + 1)
     print("Omepikya Tiny v0.1 — randomly initialized character bigram model")
     print(f"Characters: {len(tokenizer.characters)} | training pairs: {len(inputs)}")
     print(f"Parameters: {model.weights.size + model.bias.size:,} | steps: {args.steps}")
