@@ -17,6 +17,30 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up Python for Omepikya LLM
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install LLM prototype dependencies
+        run: python -m pip install -r llm/requirements.txt
+
+      - name: Test Omepikya Tiny
+        working-directory: llm
+        run: python -m unittest discover -s tests -v
+
+      - name: Train LLM smoke-test checkpoint
+        working-directory: llm
+        run: python train.py --text data/sample.txt --steps 25 --log-every 25 --output /tmp/omepikya_tiny.npz
+
+      - name: Verify LLM generation
+        working-directory: llm
+        run: python generate.py --checkpoint /tmp/omepikya_tiny.npz --prompt "O" --tokens 20
+
+      - name: Verify LLM evaluation
+        working-directory: llm
+        run: python evaluate.py --checkpoint /tmp/omepikya_tiny.npz --text data/sample.txt
+
       - name: Set up JDK 11
         uses: actions/setup-java@v5
         with:
