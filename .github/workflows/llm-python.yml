@@ -30,6 +30,12 @@ jobs:
       - name: Run unit tests
         working-directory: llm
         run: python -m unittest discover -s tests -v
+      - name: Train causal Transformer smoke-test checkpoint
+        working-directory: llm
+        run: python train_transformer.py --text data/sample.txt --steps 5 --batch-size 4 --block-size 8 --embedding-dim 8 --heads 2 --output /tmp/omepikya_transformer.pt
+      - name: Verify causal Transformer generation
+        working-directory: llm
+        run: python generate_transformer.py --checkpoint /tmp/omepikya_transformer.pt --prompt "O" --tokens 5
       - name: Run context-model unit tests
         working-directory: llm
         run: python -m unittest tests/test_omepikya_context.py -v
