@@ -17,7 +17,8 @@ class OmepikyaContextTests(unittest.TestCase):
 
     def test_examples_are_padded_and_aligned(self):
         self.assertEqual(self.contexts.shape, (len(self.ids)-1, 3))
-        self.assertTrue(np.all(self.contexts[0] == self.model.vocab_size))
+        self.assertTrue(np.all(self.contexts[0, :2] == self.model.vocab_size))
+        self.assertEqual(self.contexts[0, 2], self.ids[0])
         self.assertEqual(self.targets[0], self.ids[1])
 
     def test_training_reduces_loss(self):
