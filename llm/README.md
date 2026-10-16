@@ -26,6 +26,9 @@ python evaluate.py --checkpoint checkpoints/omepikya_tiny.npz --text data/sample
 # Train and generate with the context-aware MLP
 python train_context.py --text data/sample.txt --steps 500 --output checkpoints/omepikya_context.npz
 python generate_context.py --checkpoint checkpoints/omepikya_context.npz --prompt "Omepikya" --tokens 200
+
+# Compare held-out loss (lower is better)
+python benchmark.py --text data/sample.txt --steps 300
 ```
 
 The repository includes a tiny demonstration corpus in `data/sample.txt`. It is only for smoke tests and is not enough to create a capable conversational model. Replace it with appropriately licensed, non-sensitive text before meaningful experiments.
@@ -38,4 +41,4 @@ The repository includes a tiny demonstration corpus in `data/sample.txt`. It is 
 - Generation is autoregressive and supports a temperature parameter.
 - Validation loss is reported separately when a validation split is possible.
 
-Both are small language-model experiments, **not yet a Transformer and not capable assistants**. The context MLP improves the conditioning window but does not provide long-range attention or robust language understanding. The next milestone is a tiny causal Transformer with a documented parameter budget and benchmarks. Do not commit private data, API keys, or large checkpoints to Git.
+Both are small language-model experiments, **not yet a Transformer and not capable assistants**. The context MLP improves the conditioning window but does not provide long-range attention or robust language understanding. The `benchmark.py` command compares held-out next-character cross-entropy for the bigram and context MLP using the same training-only vocabulary and validation split. The next model milestone is a tiny causal Transformer with a documented parameter budget and benchmarks. Do not commit private data, API keys, or large checkpoints to Git.
