@@ -30,6 +30,15 @@ jobs:
       - name: Run unit tests
         working-directory: llm
         run: python -m unittest discover -s tests -v
+      - name: Run context-model unit tests
+        working-directory: llm
+        run: python -m unittest tests/test_omepikya_context.py -v
+      - name: Train a context-model smoke-test checkpoint
+        working-directory: llm
+        run: python train_context.py --text data/sample.txt --steps 5 --log-every 5 --output /tmp/omepikya_context.npz
+      - name: Verify context-model generation
+        working-directory: llm
+        run: python generate_context.py --checkpoint /tmp/omepikya_context.npz --prompt "O" --tokens 10
       - name: Train a smoke-test checkpoint
         working-directory: llm
         run: python train.py --text data/sample.txt --steps 25 --log-every 25 --output /tmp/omepikya_tiny.npz
