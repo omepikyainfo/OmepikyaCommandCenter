@@ -48,6 +48,35 @@ class OmepikyaTinyTests(unittest.TestCase):
             np.testing.assert_allclose(restored.weights, self.model.weights)
             np.testing.assert_allclose(restored.bias, self.model.bias)
 
+
+    def test_gradient_matches_finite_difference(self):
+        inputs = self.ids[:4]
+        targets = self.ids[1:5]
+        _, grad_weights, grad_bias = self.model.loss_and_gradients(inputs, targets)
+        epsilon = 1e-5
+
+        original = self.model.weights[0, 0]
+        self.model.weights[0, 0] = original + epsilon
+        plus = self.model.loss(inputs, targets)
+        self.model.weights[0, 0] = original - epsilon
+        minus = self.model.loss(inputs, targets)
+        self.model.weights[0, 0] = original
+        numerical = (plus - minus) / (2 * epsilon)
+        self.assertAlmostEqual(numerical, grad_weights[0, 0], places=5)
+
+        original_bias = self.model.bias[0]
+        self.model.bias[0] = original_bias + epsilon
+        plus = self.model.loss(inputs, targets)
+        self.model.bias[0] = original_bias - epsilon
+        minus = self.model.loss(inputs, targets)
+        self.model.bias[0] = original_bias
+        numerical_bias = (plus - minus) / (2 * epsilon)
+        self.assertAlmostEqual(numerical_bias, grad_bias[0], places=5)
+
+    def test_generation_rejects_nonpositive_temperature(self):
+        with self.assertRaises(ValueError):
+            self.model.generate(0, 2, temperature=0.0)
+
     def test_split_text(self):
         train, validation = split_text("abcdefghij", 0.2)
         self.assertEqual(train, "abcdefgh")
