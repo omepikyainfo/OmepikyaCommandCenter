@@ -8,6 +8,7 @@ import org.json.JSONArray;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Phase 7H:
@@ -145,7 +146,7 @@ public final class WorkflowEngine {
         }
 
         return name.trim()
-                .toLowerCase()
+                .toLowerCase(Locale.US)
                 .replaceAll(
                         "[^a-z0-9_ -]",
                         "")
