@@ -5,6 +5,7 @@ import com.omepikya.commandcenter.core.CommandType;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class IntentParserTest {
@@ -31,6 +32,22 @@ public class IntentParserTest {
         Intent intent = parser.parse("   ");
         assertEquals(CommandType.UNKNOWN, intent.getCommandType());
         assertEquals(0.0, intent.getConfidence(), 0.0);
+    }
+
+    @Test
+    public void safelyRejectsNullCommand() {
+        Intent intent = parser.parse(null);
+        assertNotNull(intent);
+        assertEquals(CommandType.UNKNOWN, intent.getCommandType());
+        assertEquals(0.0, intent.getConfidence(), 0.0);
+    }
+
+    @Test
+    public void normalizesRepeatedWhitespaceBeforeMatching() {
+        Intent intent = parser.parse("  Open   YouTube  ");
+        assertEquals(CommandType.OPEN_APP, intent.getCommandType());
+        assertEquals("Open YouTube", intent.getCommand());
+        assertEquals("YouTube", intent.getEntity("app"));
     }
 
     @Test
