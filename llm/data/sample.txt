@@ -1,0 +1,1 @@
+Omepikya is learning language one character at a time.\nA small language model predicts the next character from context.\nTrain the model, save its weights, reload the checkpoint, and generate text.\nOmepikya Command Center uses careful validation and safe execution.\nA model should be tested with data it is allowed to learn from.\n
