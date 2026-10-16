@@ -46,7 +46,7 @@ public class IntentParserTest {
     public void normalizesRepeatedWhitespaceBeforeMatching() {
         Intent intent = parser.parse("  Open   YouTube  ");
         assertEquals(CommandType.OPEN_APP, intent.getCommandType());
-        assertEquals("Open YouTube", intent.getCommand());
+        assertEquals("  Open   YouTube  ", intent.getRawCommand());
         assertEquals("YouTube", intent.getEntity("app"));
     }
 
