@@ -48,6 +48,18 @@ public class FailureClassifierTest {
     }
 
     @Test
+    public void temporarilyUnavailableFailureCanRetry() {
+        FailureClassifier.Analysis a =
+                classifier.analyze("Service temporarily unavailable");
+
+        assertEquals(
+                FailureClassifier.Type.TEMPORARY,
+                a.getType());
+        assertTrue(a.isRetryable());
+        assertFalse(a.requiresConfirmation());
+    }
+
+    @Test
     public void cancellationNeverRetries() {
         FailureClassifier.Analysis a =
                 classifier.analyze("Execution cancelled");
