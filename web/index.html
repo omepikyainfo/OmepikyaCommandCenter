@@ -6,6 +6,8 @@
   <meta name="theme-color" content="#101827">
   <meta name="description" content="Omepikya Command Center — personal, cross-platform command dashboard.">
   <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./icon.svg">
   <link rel="stylesheet" href="./styles.css">
   <title>Omepikya Command Center</title>
 </head>
@@ -41,5 +43,14 @@
     <footer>OMEPIKYA COMMAND CENTER <span>Cross-platform foundation · Preview</span></footer>
   </main>
   <script src="./app.js" defer></script>
+  <script>
+    if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js").catch(() => {
+          // The app remains usable online if offline caching is unavailable.
+        });
+      });
+    }
+  </script>
 </body>
 </html>
