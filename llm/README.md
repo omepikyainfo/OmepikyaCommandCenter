@@ -29,7 +29,7 @@ python train_context.py --text data/sample.txt --steps 500 --output checkpoints/
 python generate_context.py --checkpoint checkpoints/omepikya_context.npz --prompt "Omepikya" --tokens 200
 
 # Compare held-out loss (lower is better)
-python benchmark.py --text data/sample.txt --steps 300
+python benchmark.py --text data/sample.txt --steps 300 --transformer-steps 100
 
 # Train the tiny causal Transformer (PyTorch; random initialization)
 python train_transformer.py --text data/sample.txt --steps 200 --output checkpoints/omepikya_transformer.pt
@@ -46,6 +46,6 @@ The repository includes a tiny demonstration corpus in `data/sample.txt`. It is 
 - Generation is autoregressive and supports a temperature parameter.
 - Validation loss is reported separately when a validation split is possible.
 
-The bigram and context MLP remain small baselines, not capable assistants. The causal Transformer is an early architecture experiment, not evidence of meaningful language understanding. Its attention mask blocks future tokens; automated tests verify that changing future tokens does not alter earlier-position logits. The current held-out benchmark compares the bigram and context MLP; Transformer evaluation and parameter/runtime comparisons remain future work. The bundled corpus is only for smoke tests. Do not commit private data, API keys, or large checkpoints to Git.
+The bigram and context MLP remain small baselines, not capable assistants. The causal Transformer is an early architecture experiment, not evidence of meaningful language understanding. Its attention mask blocks future tokens; automated tests verify that changing future tokens does not alter earlier-position logits. The `benchmark.py` command now compares all three models on the same held-out next-character stream and reports loss, perplexity, Transformer parameter count, and measured training time. The included corpus is only a smoke-test corpus, so those measurements validate the pipeline rather than general language ability. The bundled corpus is only for smoke tests. Do not commit private data, API keys, or large checkpoints to Git.
 
 The Transformer uses PyTorch for automatic differentiation, so it is heavier than the NumPy baselines. Start with tiny dimensions and short runs on a phone-accessible notebook or CI runner; do not assume comfortable on-device training until runtime and memory are measured.
