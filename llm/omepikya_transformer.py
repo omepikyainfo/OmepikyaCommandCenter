@@ -26,10 +26,10 @@ class TransformerConfig:
             raise ValueError("vocab_size must be at least 2")
         if self.block_size < 2:
             raise ValueError("block_size must be at least 2")
-        if self.embedding_dim < 4 or self.embedding_dim % self.heads:
-            raise ValueError("embedding_dim must be >= 4 and divisible by heads")
         if self.heads < 1 or self.layers < 1:
             raise ValueError("heads and layers must be positive")
+        if self.embedding_dim < 4 or self.embedding_dim % self.heads:
+            raise ValueError("embedding_dim must be >= 4 and divisible by heads")
         if not 0.0 <= self.dropout < 1.0:
             raise ValueError("dropout must be in [0, 1)")
 
