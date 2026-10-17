@@ -44,7 +44,7 @@ public class SpeechRecognizer {
                 .isRecognitionAvailable(this.context)) {
 
             throw new IllegalStateException(
-                    "Speech recognition is not available. Install or enable a speech recognition service on your phone."
+                    "Speech recognition is not available"
             );
         }
 
@@ -78,27 +78,9 @@ public class SpeechRecognizer {
                 RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
         );
 
-        /*
-         * EXTRA_LANGUAGE expects a BCP-47 language-tag String.
-         * Passing a Locale object here can prevent some Android
-         * recognition services from applying the requested language.
-         */
-        String languageTag =
-                Locale.getDefault().toLanguageTag();
-
         intent.putExtra(
                 RecognizerIntent.EXTRA_LANGUAGE,
-                languageTag
-        );
-
-        intent.putExtra(
-                RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE,
-                languageTag
-        );
-
-        intent.putExtra(
-                RecognizerIntent.EXTRA_MAX_RESULTS,
-                3
+                Locale.getDefault().toLanguageTag()
         );
 
         intent.putExtra(
@@ -184,9 +166,7 @@ public class SpeechRecognizer {
             ) {
 
                 ArrayList<String> matches =
-                        results == null
-                                ? null
-                                : results.getStringArrayList(
+                        results.getStringArrayList(
                                 android.speech.SpeechRecognizer
                                         .RESULTS_RECOGNITION
                         );
@@ -211,7 +191,7 @@ public class SpeechRecognizer {
                     if (listener != null) {
                         listener.onResult(
                                 SpeechResult.failure(
-                                        "No speech recognized. Try speaking clearly, check the selected recognition language, and verify your internet connection if your speech service requires it."
+                                        "No speech recognized"
                                 )
                         );
                     }
@@ -226,8 +206,7 @@ public class SpeechRecognizer {
             public void onPartialResults(
                     Bundle partialResults
             ) {
-                // Partial results disabled to avoid executing
-                // an incomplete command before the user finishes.
+                // Partial results disabled.
             }
 
             @Override
@@ -247,51 +226,51 @@ public class SpeechRecognizer {
             case android.speech.SpeechRecognizer
                     .ERROR_AUDIO:
 
-                return "Audio recording error. Check that your microphone works and no other app is using it.";
+                return "Audio recording error";
 
             case android.speech.SpeechRecognizer
                     .ERROR_CLIENT:
 
-                return "Speech recognition client error. Tap VOICE to try again.";
+                return "Speech recognition client error";
 
             case android.speech.SpeechRecognizer
                     .ERROR_INSUFFICIENT_PERMISSIONS:
 
-                return "Microphone permission is required. Allow it in Android Settings > Apps > Omepikya Command Center > Permissions.";
+                return "Microphone permission is required";
 
             case android.speech.SpeechRecognizer
                     .ERROR_NETWORK:
 
-                return "Speech recognition needs a working network connection or an available offline language pack.";
+                return "Network error";
 
             case android.speech.SpeechRecognizer
                     .ERROR_NETWORK_TIMEOUT:
 
-                return "Speech recognition timed out. Check your connection and try again.";
+                return "Speech recognition network timeout";
 
             case android.speech.SpeechRecognizer
                     .ERROR_NO_MATCH:
 
-                return "I didn't recognize those words. Try a short command and speak clearly.";
+                return "No speech recognized";
 
             case android.speech.SpeechRecognizer
                     .ERROR_RECOGNIZER_BUSY:
 
-                return "Speech recognition is busy. Wait a moment and tap VOICE again.";
+                return "Speech recognizer is busy";
 
             case android.speech.SpeechRecognizer
                     .ERROR_SERVER:
 
-                return "The speech recognition service failed. Try again in a moment.";
+                return "Speech recognition server error";
 
             case android.speech.SpeechRecognizer
                     .ERROR_SPEECH_TIMEOUT:
 
-                return "I didn't hear any speech. Tap VOICE and start speaking after the listening message.";
+                return "No speech detected";
 
             default:
 
-                return "Speech recognition failed (error " + error + "). Check your speech service and try again.";
+                return "Unknown speech recognition error";
         }
     }
 }
