@@ -635,6 +635,20 @@ public class VoiceEngine {
         );
     }
 
+    /**
+     * True when Android's dedicated on-device speech recognizer is active.
+     * False means the compatibility recognizer is in use; Android may still
+     * require a network connection on those devices.
+     */
+    public synchronized boolean isUsingOnDeviceSpeechRecognition() {
+        return !shuttingDown
+                && speechRecognizer.isUsingOnDeviceRecognizer();
+    }
+
+    public static boolean isOnDeviceSpeechRecognitionAvailable(Context context) {
+        return SpeechRecognizer.isOnDeviceRecognitionAvailable(context);
+    }
+
     public synchronized boolean isTextToSpeechReady() {
 
         return !shuttingDown
