@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101827">
+  <meta name="description" content="Omepikya Command Center — personal, cross-platform command dashboard.">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="stylesheet" href="./styles.css">
+  <title>Omepikya Command Center</title>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="Omepikya Command Center home"><span class="brand-mark">O</span><span>OM EPIKYA <small>COMMAND CENTER</small></span></a>
+    <span class="status"><i></i> Local workspace</span>
+  </header>
+  <main class="shell">
+    <section class="hero">
+      <p class="eyebrow">YOUR PERSONAL COMMAND CENTER</p>
+      <h1>One place to<br><span>get things moving.</span></h1>
+      <p class="intro">A cross-device home for commands, quick actions, and your workflow. This first web version runs locally in your browser; device-specific actions are clearly marked.</p>
+      <div class="platforms" aria-label="Supported surfaces"><span>Android</span><span>iPhone & iPad</span><span>Windows</span><span>macOS</span><span>Linux</span></div>
+    </section>
+    <section class="workspace" aria-label="Command workspace">
+      <div class="panel command-panel">
+        <div class="panel-heading"><div><p class="eyebrow">COMMAND INPUT</p><h2>What do you want to do?</h2></div><span class="spark">✳</span></div>
+        <form id="command-form">
+          <label class="sr-only" for="command">Enter a command</label>
+          <textarea id="command" rows="3" placeholder="Try: Open YouTube, search for weather, or make a note…" maxlength="1000" required></textarea>
+          <div class="form-foot"><span id="char-count">0 / 1000</span><button type="submit">Run command <span aria-hidden="true">→</span></button></div>
+        </form>
+        <div id="result" class="result" role="status" aria-live="polite"><span class="result-dot"></span><div><strong>Ready when you are</strong><p>Commands are interpreted locally in this prototype. It will not claim to control your device when the browser cannot.</p></div></div>
+        <div class="quick-actions"><button type="button" data-command="Open YouTube">Open YouTube <span>↗</span></button><button type="button" data-command="Search the web for ">Web search <span>⌕</span></button><button type="button" data-command="Make a note: ">Make a note <span>＋</span></button></div>
+      </div>
+      <aside class="side-column">
+        <section class="panel"><p class="eyebrow">THIS DEVICE</p><h2 id="device-name">Detecting platform…</h2><p class="muted">Browser access is limited by your operating system and permissions.</p><div id="capabilities" class="capabilities"></div></section>
+        <section class="panel"><div class="panel-heading"><div><p class="eyebrow">RECENT ACTIVITY</p><h2>History</h2></div><button id="clear-history" class="text-button" type="button">Clear</button></div><ul id="history" class="history"><li class="empty">Your recent commands will appear here.</li></ul></section>
+      </aside>
+    </section>
+    <section class="bottom-note"><span class="lock">⌑</span><p><strong>Private by default.</strong> This prototype stores command history on this device only. It does not sync data or send commands to a server.</p></section>
+    <footer>OMEPIKYA COMMAND CENTER <span>Cross-platform foundation · Preview</span></footer>
+  </main>
+  <script src="./app.js" defer></script>
+</body>
+</html>
