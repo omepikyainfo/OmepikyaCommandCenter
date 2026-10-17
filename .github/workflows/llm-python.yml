@@ -47,7 +47,7 @@ jobs:
         run: python generate_context.py --checkpoint /tmp/omepikya_context.npz --prompt "O" --tokens 10
       - name: Compare model baselines on held-out text
         working-directory: llm
-        run: python benchmark.py --text data/sample.txt --steps 5
+        run: python benchmark.py --text data/sample.txt --steps 5 --transformer-steps 5 --block-size 8 --embedding-dim 8 --heads 2 --batch-size 4
       - name: Train a smoke-test checkpoint
         working-directory: llm
         run: python train.py --text data/sample.txt --steps 25 --log-every 25 --output /tmp/omepikya_tiny.npz
