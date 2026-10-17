@@ -103,6 +103,16 @@ export function createTinyServer({
       return sendJson(res, 404, { error: "Not found." }, headers);
     }
 
+    const apiToken = env.TINY_API_TOKEN;
+    if (apiToken) {
+      const authorization = req.headers.authorization || "";
+      if (authorization !== `Bearer ${apiToken}`) {
+        return sendJson(res, 401, { error: "Unauthorized." }, headers);
+      }
+    } else if (env.NODE_ENV === "production") {
+      return sendJson(res, 503, { error: "Tiny API authentication is not configured." }, headers);
+    }
+
     const time = now();
     const ip = req.socket.remoteAddress || "unknown";
     const bucket = rateBuckets.get(ip) || { startedAt: time, count: 0 };
