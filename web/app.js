@@ -24,6 +24,7 @@
       ["Command interface", "available"],
       ["Open websites", "available"],
       ["Local history", "available"],
+      ["Offline app shell", "serviceWorker" in navigator ? "available" : "limited"],
       ["Native app launching", "limited"],
       ["System settings control", "limited"],
       ["Background automation", "limited"]
@@ -83,7 +84,7 @@
     if (win) {
       show("Opening " + label, "Your browser was asked to open a new tab. If it was blocked, allow pop-ups for this page.");
     } else {
-      show(label + " link ready", "Your browser blocked the new tab. Copy or open this URL: " + url);
+      show(label + " link ready", "Your browser blocked the new tab. Open this URL manually: " + url);
     }
   }
 
