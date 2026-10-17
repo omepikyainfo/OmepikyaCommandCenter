@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#111827">
+  <title>Tiny · Omepikya</title>
+  <style>
+    :root{color-scheme:dark;--bg:#0b1020;--panel:#111a2d;--line:#26334c;--text:#eef3ff;--muted:#9ba9c3;--accent:#8b9cff;--user:#26365a}
+    *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#172342 0%,var(--bg) 58%);color:var(--text);font:16px/1.5 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100vh;display:flex;justify-content:center}
+    .app{width:min(900px,100%);min-height:100vh;display:flex;flex-direction:column;padding:20px}
+    header{display:flex;align-items:center;gap:12px;padding:10px 4px 20px;border-bottom:1px solid var(--line)}
+    .logo{width:44px;height:44px;border-radius:15px;background:linear-gradient(135deg,#7c8cff,#6be0c3);display:grid;place-items:center;color:#0b1020;font-weight:900;font-size:22px}
+    h1{font-size:19px;margin:0}header p{margin:2px 0 0;color:var(--muted);font-size:13px}.spacer{flex:1}
+    .status{font-size:12px;color:#f4c879;border:1px solid #65532c;border-radius:99px;padding:5px 9px;white-space:nowrap}
+    #messages{flex:1;display:flex;flex-direction:column;gap:14px;padding:22px 0;overflow:auto}
+    .welcome{margin:auto 0;text-align:center;padding:34px 18px}.orb{margin:0 auto 20px;width:84px;height:84px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#c7d0ff,#7789ff 40%,#28386a 75%);box-shadow:0 0 60px #6479ff2b}
+    .welcome h2{font-size:25px;margin:0 0 8px}.welcome p{max-width:500px;margin:0 auto;color:var(--muted)}
+    .message{max-width:min(78%,680px);padding:12px 15px;border:1px solid var(--line);border-radius:17px;white-space:pre-wrap;overflow-wrap:anywhere}
+    .message.user{align-self:flex-end;background:var(--user);border-color:#3d507c;border-bottom-right-radius:5px}.message.tiny{align-self:flex-start;background:var(--panel);border-bottom-left-radius:5px}
+    .message.system{align-self:center;max-width:100%;color:#f4c879;background:#292318;border-color:#65532c;font-size:13px}
+    .composer{border:1px solid #34425e;background:#111a2de8;border-radius:22px;padding:10px;box-shadow:0 18px 55px #0003}
+    form{display:flex;align-items:flex-end;gap:8px}textarea{flex:1;resize:none;max-height:160px;min-height:46px;border:0;outline:0;background:transparent;color:var(--text);font:inherit;padding:11px 10px}button{border:1px solid var(--line);background:#202c46;color:var(--text);border-radius:14px;min-width:46px;height:46px;padding:0 13px;font:inherit;cursor:pointer}button:hover{border-color:var(--accent)}button:disabled{opacity:.5;cursor:wait}.send{background:var(--accent);color:#0b1020;border-color:transparent;font-weight:700}.tools{display:flex;align-items:center;gap:10px;padding:8px 5px 0;color:var(--muted);font-size:12px}.tools label{display:flex;align-items:center;gap:6px}.tools input{accent-color:var(--accent)}#hint{margin-left:auto}
+    @media(max-width:540px){.app{padding:12px}.status{display:none}.message{max-width:90%}.welcome h2{font-size:22px}}
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header><div class="logo" aria-hidden="true">T</div><div><h1>Tiny</h1><p>Omepikya assistant</p></div><div class="spacer"></div><span class="status" id="status">API not connected</span></header>
+    <section id="messages" aria-live="polite">
+      <div class="welcome" id="welcome"><div class="orb"></div><h2>Talk to Tiny</h2><p>Type a message or use your microphone. Tiny's shared conversation service must be deployed at <code>/api/tiny/chat</code> before replies can be generated.</p></div>
+    </section>
+    <section class="composer">
+      <form id="chat-form">
+        <button id="mic" type="button" title="Dictate a message" aria-label="Dictate a message">🎙</button>
+        <textarea id="message" rows="1" placeholder="Message Tiny…" maxlength="8000" aria-label="Message Tiny"></textarea>
+        <button class="send" id="send" type="submit" aria-label="Send message">➤</button>
+      </form>
+      <div class="tools"><label><input type="checkbox" id="speak"> Speak replies</label><span id="hint">Enter to send · Shift+Enter for newline</span></div>
+    </section>
+  </main>
+<script>
+(() => {
+  const form=document.querySelector('#chat-form'), input=document.querySelector('#message');
+  const messages=document.querySelector('#messages'), welcome=document.querySelector('#welcome');
+  const send=document.querySelector('#send'), mic=document.querySelector('#mic');
+  const status=document.querySelector('#status'), hint=document.querySelector('#hint');
+  const speak=document.querySelector('#speak');
+  let sessionId=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():'tiny-'+Date.now()+'-'+Math.random().toString(16).slice(2);
+  let busy=false;
+  function addMessage(text,kind){if(welcome)welcome.remove();const el=document.createElement('div');el.className='message '+kind;el.textContent=text;messages.appendChild(el);messages.scrollTop=messages.scrollHeight;return el}
+  function setBusy(value){busy=value;send.disabled=value;input.disabled=value;send.textContent=value?'…':'➤'}
+  function say(text){if(speak.checked&&'speechSynthesis'in window){window.speechSynthesis.cancel();const utterance=new SpeechSynthesisUtterance(text);utterance.lang=navigator.language||'en-IN';window.speechSynthesis.speak(utterance)}}
+  async function submit(text){
+    const message=text.trim();if(!message||busy)return;
+    addMessage(message,'user');input.value='';input.style.height='auto';setBusy(true);
+    const pending=addMessage('Tiny is thinking…','tiny');
+    try{
+      const base=window.TINY_API_BASE||'';
+      const response=await fetch(base+'/api/tiny/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message,sessionId})});
+      const data=await response.json().catch(()=>({}));
+      if(!response.ok)throw new Error(data.error||('Tiny service returned HTTP '+response.status));
+      if(typeof data.reply!=='string'||!data.reply.trim())throw new Error('Tiny service returned an empty reply.');
+      if(data.sessionId)sessionId=data.sessionId;
+      pending.textContent=data.reply;status.textContent='API connected';status.style.color='#83e1bd';status.style.borderColor='#2d6a59';say(data.reply);
+    }catch(error){
+      pending.remove();addMessage('Tiny is not connected yet. The web interface is ready, but the shared /api/tiny/chat service is not available. '+(error&&error.message?error.message:'Request failed.'),'system');
+      status.textContent='API not connected';status.style.color='';status.style.borderColor='';
+    }finally{setBusy(false);input.focus()}
+  }
+  form.addEventListener('submit',event=>{event.preventDefault();submit(input.value)});
+  input.addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();form.requestSubmit()}});
+  input.addEventListener('input',()=>{input.style.height='auto';input.style.height=Math.min(input.scrollHeight,160)+'px'});
+  const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(SpeechRecognition){
+    const recognition=new SpeechRecognition();recognition.lang=navigator.language||'en-IN';recognition.interimResults=false;recognition.maxAlternatives=1;
+    mic.addEventListener('click',()=>{try{recognition.start();hint.textContent='Listening…'}catch(_){hint.textContent='Microphone is already active'}});
+    recognition.onresult=event=>{input.value=event.results[0][0].transcript;input.dispatchEvent(new Event('input'));input.focus();hint.textContent='Speech captured · review and send'};
+    recognition.onerror=event=>{hint.textContent='Microphone: '+event.error};
+    recognition.onend=()=>{if(hint.textContent==='Listening…')hint.textContent='Enter to send · Shift+Enter for newline'};
+  }else{mic.disabled=true;mic.title='Speech recognition is not supported by this browser';hint.textContent='Browser voice input unsupported · Enter to send'}
+})();
+</script>
+</body>
+</html>
