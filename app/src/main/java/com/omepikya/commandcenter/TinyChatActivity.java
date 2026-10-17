@@ -72,10 +72,9 @@ public class TinyChatActivity extends AppCompatActivity {
             if (ttsReady) textToSpeech.setLanguage(Locale.getDefault());
         });
         if (getApiBase().isEmpty()) {
-            setStatus("Set your private Tiny API to start chatting.", false);
-            showApiSettings(true);
+            setStatus("Local mode · cloud chat optional", true);
         } else {
-            setStatus("API endpoint saved · connect by sending a message", false);
+            setStatus("Cloud endpoint saved · local commands remain available", false);
         }
         addWelcome();
     }
@@ -224,7 +223,7 @@ public class TinyChatActivity extends AppCompatActivity {
         TextView heading = label("What can I help with?", 19, INK, Typeface.BOLD);
         heading.setGravity(Gravity.CENTER);
         card.addView(heading);
-        TextView body = label("Ask a question, think through an idea, or dictate a message. Tiny needs a configured, reachable API to reply.", 13, MUTED, Typeface.NORMAL);
+        TextView body = label("Try local commands like “what time is it”, “what is today's date”, or “help”. General AI conversation needs an optional configured API until an on-device language model is added.", 13, MUTED, Typeface.NORMAL);
         body.setGravity(Gravity.CENTER);
         body.setPadding(0, dp(7), 0, dp(14));
         card.addView(body);
@@ -290,15 +289,14 @@ public class TinyChatActivity extends AppCompatActivity {
                 .setTitle("Connect Tiny")
                 .setMessage("Enter the base URL of your trusted Tiny API. Do not add /api/tiny/chat. Remote servers must use HTTPS; do not connect to an unauthenticated public endpoint.")
                 .setView(fields)
-                .setCancelable(!firstRun)
-                .setNegativeButton(firstRun ? "SKIP FOR NOW" : "CANCEL", (dialog, which) -> {
-                    if (firstRun && getApiBase().isEmpty()) setStatus("API not configured · tap ⚙ to connect", false);
+                .setCancelable(true)
+                .setNegativeButton("CANCEL", (dialog, which) -> {
+                    if (getApiBase().isEmpty()) setStatus("Local mode · cloud chat optional", true);
                 })
                 .setPositiveButton("SAVE ENDPOINT", (dialog, which) -> {
                     String value = endpoint.getText().toString().trim().replaceAll("/+$", "");
                     if (!validBaseUrl(value)) {
                         Toast.makeText(this, "Enter a valid HTTPS URL (HTTP is allowed only for localhost).", Toast.LENGTH_LONG).show();
-                        if (firstRun) showApiSettings(true);
                         return;
                     }
                     getPreferences(MODE_PRIVATE).edit()
@@ -326,6 +324,28 @@ public class TinyChatActivity extends AppCompatActivity {
 
     private String getApiBase() {
         return getPreferences(MODE_PRIVATE).getString(API_BASE, "").trim();
+    }
+
+    /** Deterministic local responses; this method never uses the network or executes device actions. */
+    @Nullable
+    private String answerLocalCommand(String rawMessage) {
+        String message = rawMessage == null ? "" : rawMessage.trim().toLowerCase(Locale.ROOT);
+        if (message.isEmpty()) return null;
+        if (message.matches(".*\\b(hi|hello|hey)\\b.*")) {
+            return "Hello! Tiny is running in local mode. Try asking for the time, date, or help.";
+        }
+        if (message.contains("what time") || message.equals("time") || message.contains("current time")) {
+            return "The time on this device is "
+                    + java.text.DateFormat.getTimeInstance(java.text.DateFormat.SHORT, Locale.getDefault()).format(new java.util.Date()) + ".";
+        }
+        if ((message.contains("today") && message.contains("date")) || message.equals("date") || message.contains("what date")) {
+            return "Today's date on this device is "
+                    + java.text.DateFormat.getDateInstance(java.text.DateFormat.LONG, Locale.getDefault()).format(new java.util.Date()) + ".";
+        }
+        if (message.equals("help") || message.contains("what can you do")) {
+            return "Local Tiny can currently answer basic greetings, the device time and date, and this help message. Use Command Center for supported device commands. General AI chat needs a trusted API or a future bundled on-device model.";
+        }
+        return null;
     }
 
     private void startDictation() {
@@ -361,8 +381,19 @@ public class TinyChatActivity extends AppCompatActivity {
         }
         String base = getApiBase();
         if (base.isEmpty()) {
-            showApiSettings(false);
-            setStatus("API not configured", false);
+            String localReply = answerLocalCommand(message);
+            addMessage(message, true);
+            input.setText("");
+            if (localReply != null) {
+                addMessage(localReply, false);
+                setStatus("Local mode · handled on this device", true);
+                if (speakReplies.isChecked() && ttsReady && textToSpeech != null) {
+                    textToSpeech.speak(localReply, TextToSpeech.QUEUE_FLUSH, null, "tiny-local-reply");
+                }
+            } else {
+                addMessage("I’m in local mode, but an on-device language model is not installed yet. I can answer a few built-in commands; for general conversation, configure a trusted Tiny API with ⚙. Device actions remain in Command Center.", false);
+                setStatus("Local mode · on-device AI model not installed", false);
+            }
             return;
         }
         if (!validBaseUrl(base)) {
