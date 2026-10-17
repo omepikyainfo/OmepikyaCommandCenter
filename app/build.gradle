@@ -1,15 +1,19 @@
 apply plugin: 'com.android.application'
 
-// This key is for repeatable DEBUG installs only. Never reuse it for a public
-// production release. Keeping the debug certificate stable prevents Android
-// signature conflicts when installing newer CI debug APKs over older ones.
+// Optional repeatable DEBUG signing is supplied only through GitHub Actions
+// secrets. If no complete secret set is configured, use Gradle's standard
+// debug signing. Never use a debug key for a production release.
 def stableDebugKeyFile = file("$buildDir/omepikya-debug.keystore")
-def stableDebugKeyEncoded = file("omepikya-debug.keystore.b64")
-if (stableDebugKeyEncoded.exists()) {
+def stableDebugKeyEncoded = System.getenv("OMEPIKYA_DEBUG_KEYSTORE_B64")
+def stableDebugStorePassword = System.getenv("OMEPIKYA_DEBUG_STORE_PASSWORD")
+def stableDebugKeyAlias = System.getenv("OMEPIKYA_DEBUG_KEY_ALIAS")
+def stableDebugKeyPassword = System.getenv("OMEPIKYA_DEBUG_KEY_PASSWORD")
+def hasStableDebugSigning = [stableDebugKeyEncoded, stableDebugStorePassword,
+        stableDebugKeyAlias, stableDebugKeyPassword].every { it != null && !it.trim().isEmpty() }
+
+if (hasStableDebugSigning) {
     stableDebugKeyFile.parentFile.mkdirs()
-    stableDebugKeyFile.bytes = java.util.Base64.decoder.decode(
-            stableDebugKeyEncoded.text.trim()
-    )
+    stableDebugKeyFile.bytes = java.util.Base64.decoder.decode(stableDebugKeyEncoded.trim())
 }
 
 android {
@@ -26,22 +30,25 @@ android {
     }
 
     signingConfigs {
-        stableDebug {
-            storeFile stableDebugKeyFile
-            storePassword "omepikya-debug-only"
-            keyAlias "omepikya-debug"
-            keyPassword "omepikya-debug-only"
+        if (hasStableDebugSigning) {
+            stableDebug {
+                storeFile stableDebugKeyFile
+                storePassword stableDebugStorePassword
+                keyAlias stableDebugKeyAlias
+                keyPassword stableDebugKeyPassword
+            }
         }
     }
 
     buildTypes {
         debug {
-            signingConfig signingConfigs.stableDebug
+            if (hasStableDebugSigning) {
+                signingConfig signingConfigs.stableDebug
+            }
             minifyEnabled false
         }
         release {
             // Release signing must use a separate private production keystore.
-            // Do not sign production releases with the public debug key.
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
