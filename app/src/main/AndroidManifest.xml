@@ -4,6 +4,8 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.omepikya.commandcenter">
 
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <!-- Voice commands -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
@@ -54,6 +56,10 @@
             </intent-filter>
 
         </receiver>
+
+        <activity
+            android:name=".TinyChatActivity"
+            android:exported="false" />
 
         <activity
             android:name=".HelpActivity"

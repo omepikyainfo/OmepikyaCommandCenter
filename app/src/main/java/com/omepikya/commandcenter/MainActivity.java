@@ -511,6 +511,11 @@ public class MainActivity
     }
 
     @Override
+    public void onTinyChatRequested() {
+        startActivity(new Intent(this, TinyChatActivity.class));
+    }
+
+    @Override
     public void onExecuteCommand(
             String command
     ) {
