@@ -40,6 +40,7 @@ import java.util.concurrent.Executors;
 public class TinyChatActivity extends AppCompatActivity {
     private static final int SPEECH_REQUEST_CODE = 3101;
     private static final String API_BASE = "api_base";
+    private static final String API_TOKEN = "api_token";
     private static final int INK = 0xFF17233B;
     private static final int MUTED = 0xFF718096;
     private static final int ACCENT = 0xFF5B6FF5;
@@ -274,10 +275,21 @@ public class TinyChatActivity extends AppCompatActivity {
         endpoint.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
         endpoint.setHint("https://your-private-tiny-host.example");
         endpoint.setText(getApiBase());
+        EditText token = new EditText(this);
+        token.setSingleLine(true);
+        token.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        token.setHint("API access token (if required)");
+        token.setText(getPreferences(MODE_PRIVATE).getString(API_TOKEN, ""));
+        LinearLayout fields = new LinearLayout(this);
+        fields.setOrientation(LinearLayout.VERTICAL);
+        int fieldPadding = dp(20);
+        fields.setPadding(fieldPadding, 0, fieldPadding, 0);
+        fields.addView(endpoint);
+        fields.addView(token);
         new AlertDialog.Builder(this)
                 .setTitle("Connect Tiny")
                 .setMessage("Enter the base URL of your trusted Tiny API. Do not add /api/tiny/chat. Remote servers must use HTTPS; do not connect to an unauthenticated public endpoint.")
-                .setView(endpoint)
+                .setView(fields)
                 .setCancelable(!firstRun)
                 .setNegativeButton(firstRun ? "SKIP FOR NOW" : "CANCEL", (dialog, which) -> {
                     if (firstRun && getApiBase().isEmpty()) setStatus("API not configured · tap ⚙ to connect", false);
@@ -289,7 +301,10 @@ public class TinyChatActivity extends AppCompatActivity {
                         if (firstRun) showApiSettings(true);
                         return;
                     }
-                    getPreferences(MODE_PRIVATE).edit().putString(API_BASE, value).apply();
+                    getPreferences(MODE_PRIVATE).edit()
+                            .putString(API_BASE, value)
+                            .putString(API_TOKEN, token.getText().toString().trim())
+                            .apply();
                     setStatus("Endpoint saved · send a message to test it", false);
                 })
                 .show();
@@ -372,6 +387,8 @@ public class TinyChatActivity extends AppCompatActivity {
                 connection.setReadTimeout(25000);
                 connection.setDoOutput(true);
                 connection.setRequestProperty("Content-Type", "application/json; charset=utf-8");
+                String apiToken = getPreferences(MODE_PRIVATE).getString(API_TOKEN, "").trim();
+                if (!apiToken.isEmpty()) connection.setRequestProperty("Authorization", "Bearer " + apiToken);
                 byte[] payload = body.toString().getBytes(StandardCharsets.UTF_8);
                 connection.setFixedLengthStreamingMode(payload.length);
                 try (OutputStream output = connection.getOutputStream()) {
