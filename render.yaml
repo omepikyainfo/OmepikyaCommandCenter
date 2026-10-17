@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: omepikya-tiny-api
+    runtime: node
+    rootDir: server
+    buildCommand: npm test
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: TINY_API_TOKEN
+        generateValue: true
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: TINY_MODEL
+        value: gpt-4.1-mini
+      - key: TINY_RATE_LIMIT
+        value: "30"
