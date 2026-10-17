@@ -28,16 +28,21 @@ jobs:
           node-version: '20'
 
       - name: Check JavaScript syntax
-        run: node --check web/app.js
+        run: |
+          node --check web/app.js
+          node --check web/sw.js
 
-      - name: Validate PWA manifest JSON
-        run: node -e "JSON.parse(require('fs').readFileSync('web/manifest.webmanifest', 'utf8'))"
+      - name: Validate PWA manifest and icon
+        run: |
+          node -e "const fs=require('fs'); const m=JSON.parse(fs.readFileSync('web/manifest.webmanifest','utf8')); if (!Array.isArray(m.icons) || !m.icons.some(i => i.src === './icon.svg')) process.exit(1);"
+          test -s web/icon.svg
 
       - name: Verify required web files
         run: |
           test -s web/index.html
           test -s web/styles.css
           test -s web/app.js
+          test -s web/sw.js
           test -s web/manifest.webmanifest
           test -s web/README.md
 
