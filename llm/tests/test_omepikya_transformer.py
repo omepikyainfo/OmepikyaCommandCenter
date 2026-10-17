@@ -41,8 +41,14 @@ class TransformerTests(unittest.TestCase):
             self.assertTrue(torch.allclose(self.model(torch.tensor([[1, 2]])), loaded(torch.tensor([[1, 2]]))))
 
     def test_invalid_config_rejected(self):
-        with self.assertRaises(ValueError):
-            TransformerConfig(vocab_size=8, embedding_dim=7, heads=2).validate()
+        invalid_configs = (
+            TransformerConfig(vocab_size=8, embedding_dim=7, heads=2),
+            TransformerConfig(vocab_size=8, embedding_dim=8, heads=0),
+            TransformerConfig(vocab_size=8, embedding_dim=8, layers=0),
+        )
+        for config in invalid_configs:
+            with self.subTest(config=config), self.assertRaises(ValueError):
+                config.validate()
 
 
 if __name__ == "__main__":
