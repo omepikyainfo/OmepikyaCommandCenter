@@ -2,6 +2,7 @@ package com.omepikya.commandcenter.voice;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
@@ -26,6 +27,7 @@ public class SpeechRecognizer {
 
     private final Context context;
     private final android.speech.SpeechRecognizer recognizer;
+    private final boolean usingOnDeviceRecognizer;
 
     private Listener listener;
 
@@ -48,11 +50,30 @@ public class SpeechRecognizer {
             );
         }
 
-        recognizer =
-                android.speech.SpeechRecognizer
-                        .createSpeechRecognizer(
-                                this.context
-                        );
+        /*
+         * Prefer Android's dedicated on-device recognizer whenever it is
+         * available. This keeps speech processing local on supported devices.
+         */
+        boolean onDeviceAvailable =
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+                        && android.speech.SpeechRecognizer
+                                .isOnDeviceRecognitionAvailable(this.context);
+
+        if (onDeviceAvailable) {
+            recognizer =
+                    android.speech.SpeechRecognizer
+                            .createOnDeviceSpeechRecognizer(this.context);
+            usingOnDeviceRecognizer = true;
+        } else {
+            /*
+             * Compatibility fallback for older devices. Android may ignore
+             * EXTRA_PREFER_OFFLINE, so this path is not guaranteed offline.
+             */
+            recognizer =
+                    android.speech.SpeechRecognizer
+                            .createSpeechRecognizer(this.context);
+            usingOnDeviceRecognizer = false;
+        }
 
         recognizer.setRecognitionListener(
                 createRecognitionListener()
@@ -88,11 +109,34 @@ public class SpeechRecognizer {
                 false
         );
 
+        // Ask compatible system recognizers to use downloaded offline speech data.
+        intent.putExtra(
+                RecognizerIntent.EXTRA_PREFER_OFFLINE,
+                true
+        );
+
         if (listener != null) {
             listener.onReady();
         }
 
         recognizer.startListening(intent);
+    }
+
+    /**
+     * True only when Android's dedicated on-device recognizer is active.
+     * The compatibility fallback may still require network access.
+     */
+    public boolean isUsingOnDeviceRecognizer() {
+        return usingOnDeviceRecognizer;
+    }
+
+    public static boolean isOnDeviceRecognitionAvailable(Context context) {
+        return context != null
+                && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+                && android.speech.SpeechRecognizer
+                        .isOnDeviceRecognitionAvailable(
+                                context.getApplicationContext()
+                        );
     }
 
     public void stopListening() {
@@ -241,12 +285,16 @@ public class SpeechRecognizer {
             case android.speech.SpeechRecognizer
                     .ERROR_NETWORK:
 
-                return "Network error";
+                return usingOnDeviceRecognizer
+                        ? "On-device speech recognition failed. Check the downloaded offline language pack."
+                        : "Speech recognition needs internet or a supported offline language pack.";
 
             case android.speech.SpeechRecognizer
                     .ERROR_NETWORK_TIMEOUT:
 
-                return "Speech recognition network timeout";
+                return usingOnDeviceRecognizer
+                        ? "On-device recognition timed out. Check the offline language pack."
+                        : "Speech recognition timed out. Download an offline language pack for offline use.";
 
             case android.speech.SpeechRecognizer
                     .ERROR_NO_MATCH:
