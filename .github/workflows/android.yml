@@ -55,6 +55,11 @@ jobs:
 
       - name: Debug APK
         run: ./gradlew assembleDebug --no-daemon
+        env:
+          OMEPIKYA_DEBUG_KEYSTORE_B64: ${{ secrets.OMEPIKYA_DEBUG_KEYSTORE_B64 }}
+          OMEPIKYA_DEBUG_STORE_PASSWORD: ${{ secrets.OMEPIKYA_DEBUG_STORE_PASSWORD }}
+          OMEPIKYA_DEBUG_KEY_ALIAS: ${{ secrets.OMEPIKYA_DEBUG_KEY_ALIAS }}
+          OMEPIKYA_DEBUG_KEY_PASSWORD: ${{ secrets.OMEPIKYA_DEBUG_KEY_PASSWORD }}
 
       - name: Release APK
         run: ./gradlew assembleRelease --no-daemon
