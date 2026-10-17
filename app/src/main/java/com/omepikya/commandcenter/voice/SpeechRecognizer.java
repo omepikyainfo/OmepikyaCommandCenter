@@ -80,7 +80,7 @@ public class SpeechRecognizer {
 
         intent.putExtra(
                 RecognizerIntent.EXTRA_LANGUAGE,
-                Locale.getDefault()
+                Locale.getDefault().toLanguageTag()
         );
 
         intent.putExtra(
