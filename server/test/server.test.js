@@ -72,7 +72,10 @@ test("missing provider configuration returns a safe 503", async () => {
 });
 
 test("origin allowlist blocks unknown browser origins", async () => {
-  await withServer({ env: { TINY_ALLOWED_ORIGINS: "https://tiny.example" } }, async base => {
+  await withServer({
+    env: { TINY_ALLOWED_ORIGINS: "https://tiny.example" },
+    generateReply: async () => "ok"
+  }, async base => {
     const denied = await post(base, { message: "hello" }, { origin: "https://evil.example" });
     assert.equal(denied.status, 403);
     const allowed = await post(base, { message: "hello" }, { origin: "https://tiny.example" });
