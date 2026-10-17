@@ -24,16 +24,19 @@ function readJson(req) {
   return new Promise((resolve, reject) => {
     let body = "";
     let bytes = 0;
+    let settled = false;
     req.on("data", chunk => {
+      if (settled) return;
       bytes += chunk.length;
       if (bytes > MAX_BODY_BYTES) {
+        settled = true;
         reject(Object.assign(new Error("Request body is too large."), { statusCode: 413 }));
-        req.destroy();
         return;
       }
       body += chunk.toString("utf8");
     });
     req.on("end", () => {
+      if (settled) return;
       if (!body) return reject(Object.assign(new Error("A JSON body is required."), { statusCode: 400 }));
       try {
         resolve(JSON.parse(body));
