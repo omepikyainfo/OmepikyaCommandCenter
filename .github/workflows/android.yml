@@ -2,7 +2,7 @@ name: Android CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, update/phase9-stability-review ]
   pull_request:
     branches: [ main ]
 

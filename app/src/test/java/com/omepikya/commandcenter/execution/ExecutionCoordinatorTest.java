@@ -28,6 +28,25 @@ public class ExecutionCoordinatorTest {
         assertEquals(1,executor.getHistory().size());
         assertTrue(coordinator.getEventBus().getRecentEvents(10).size()>0);
     }
+    @Test public void returnsCancelledResultWhenTokenWasCancelledBeforeStart() {
+        ActionExecutor executor = new ActionExecutor(
+                new ActionRouter(new ActionRegistry()));
+        ExecutionCoordinator coordinator = new ExecutionCoordinator(
+                executor, new RecoveryEngine());
+        ExecutionCancellation cancellation = new ExecutionCancellation();
+        cancellation.cancel("Cancelled before start.");
+
+        ExecutionResult result = coordinator.execute(
+                new CommandContext("unknown command", CommandType.DEVICE_ACTION),
+                cancellation);
+
+        assertTrue(!result.isSuccess());
+        assertEquals(ExecutionStatus.CANCELLED, result.getStatus());
+        assertEquals(ExecutionStatus.CANCELLED,
+                coordinator.getLastTrace().getState());
+        assertEquals(0, executor.getHistory().size());
+    }
+
     @Test public void rejectsMissingActionWithoutUnsafeRetry() {
         ActionExecutor executor=new ActionExecutor(new ActionRouter(new ActionRegistry()));
         ExecutionCoordinator coordinator=new ExecutionCoordinator(executor,new RecoveryEngine());

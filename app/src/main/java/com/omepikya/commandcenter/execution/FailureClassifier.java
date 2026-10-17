@@ -217,6 +217,19 @@ public final class FailureClassifier {
                     message);
         }
 
+        // A transient outage must remain retryable; otherwise the
+        // generic "unavailable" match below incorrectly treats it as missing.
+        if (value.contains("temporarily unavailable")) {
+
+            return new Analysis(
+                    Type.TEMPORARY,
+                    Severity.MEDIUM,
+                    true,
+                    false,
+                    false,
+                    message);
+        }
+
         if (contains(
                 value,
                 "not found",

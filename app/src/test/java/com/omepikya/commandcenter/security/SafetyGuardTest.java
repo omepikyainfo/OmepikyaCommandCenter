@@ -20,18 +20,17 @@ public class SafetyGuardTest {
 
     @Test
     public void confirmationProtectedCommandCannotBypassConfirmation() {
-        SafetyDecision decision =
-                guard.check("delete all files");
+        String command = "delete all files";
+        SafetyDecision decision = guard.check(command);
 
-        if (decision.requiresConfirmation()) {
-            assertFalse(
-                    guard.canExecute(
-                            "delete all files",
-                            false));
-            assertTrue(
-                    guard.canExecute(
-                            "delete all files",
-                            true));
-        }
+        assertTrue(decision.isAllowed());
+        assertTrue(decision.requiresConfirmation());
+        assertFalse(guard.canExecute(command, false));
+        assertTrue(guard.canExecute(command, true));
+    }
+
+    @Test
+    public void emptyCommandIsRejected() {
+        assertFalse(guard.canExecute("   ", false));
     }
 }
