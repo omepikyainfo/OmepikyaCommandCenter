@@ -1,5 +1,17 @@
 apply plugin: 'com.android.application'
 
+// This key is for repeatable DEBUG installs only. Never reuse it for a public
+// production release. Keeping the debug certificate stable prevents Android
+// signature conflicts when installing newer CI debug APKs over older ones.
+def stableDebugKeyFile = file("$buildDir/omepikya-debug.keystore")
+def stableDebugKeyEncoded = file("omepikya-debug.keystore.b64")
+if (stableDebugKeyEncoded.exists()) {
+    stableDebugKeyFile.parentFile.mkdirs()
+    stableDebugKeyFile.bytes = java.util.Base64.decoder.decode(
+            stableDebugKeyEncoded.text.trim()
+    )
+}
+
 android {
     namespace 'com.omepikya.commandcenter'
     compileSdkVersion 34
@@ -13,11 +25,23 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        stableDebug {
+            storeFile stableDebugKeyFile
+            storePassword "omepikya-debug-only"
+            keyAlias "omepikya-debug"
+            keyPassword "omepikya-debug-only"
+        }
+    }
+
     buildTypes {
         debug {
+            signingConfig signingConfigs.stableDebug
             minifyEnabled false
         }
         release {
+            // Release signing must use a separate private production keystore.
+            // Do not sign production releases with the public debug key.
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
