@@ -27,6 +27,7 @@ public class CommandView {
 
         void onExecuteCommand(String command);
         void onVoiceRequested();
+        void onTinyChatRequested();
         void onHistoryRequested();
         void onAutomationsRequested();
         void onHelpRequested();
@@ -166,6 +167,16 @@ public class CommandView {
         LinearLayout.LayoutParams buttonRowParams = matchWrap();
         buttonRowParams.topMargin = dp(6);
         root.addView(buttonRow, buttonRowParams);
+
+        Button tinyChatButton = new Button(context);
+        tinyChatButton.setText("CHAT WITH TINY");
+        tinyChatButton.setAllCaps(false);
+        LinearLayout.LayoutParams tinyChatParams = matchWrap();
+        tinyChatParams.topMargin = dp(4);
+        root.addView(tinyChatButton, tinyChatParams);
+        tinyChatButton.setOnClickListener(v -> {
+            if (listener != null) listener.onTinyChatRequested();
+        });
 
         TextView quickLabel = textView(
                 "QUICK COMMANDS  →",
