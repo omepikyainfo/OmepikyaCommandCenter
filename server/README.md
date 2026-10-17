@@ -21,12 +21,13 @@ npm test
 OPENAI_API_KEY=your_server_side_key npm start
 ```
 
-The server binds to `127.0.0.1:8080` by default. Set `HOST=0.0.0.0` only when your deployment environment requires external binding, and put it behind HTTPS and an authentication-aware reverse proxy.
+The server binds to `127.0.0.1:8080` by default. Set `HOST=0.0.0.0` only when your deployment environment requires external binding. Production deployments require `TINY_API_TOKEN` and HTTPS. A Render blueprint is provided at the repository root (`render.yaml`); set `OPENAI_API_KEY` as a secret in the hosting dashboard, never in Git.
 
 ## Configuration
 
 - `OPENAI_API_KEY`: required server-side provider credential. Never put this in Android resources, web JavaScript, Git, or a client-side environment variable.
 - `TINY_MODEL`: optional model override; defaults to `gpt-4.1-mini`.
+- `TINY_API_TOKEN`: required in production. Requests to `POST /api/tiny/chat` must include `Authorization: Bearer <token>`. Keep this token private and enter it only in the Android app's Tiny settings. The production server refuses to start without it.
 - `OPENAI_RESPONSES_URL`: optional provider endpoint override, mainly for controlled testing.
 - `PORT`: optional listener port; defaults to `8080`.
 - `HOST`: optional listener host; defaults to `127.0.0.1`.
@@ -56,6 +57,6 @@ Input is limited to 4,000 characters and request bodies to 16 KiB. Conversation 
 - No model tools or command-execution endpoint are registered in this service.
 - Cloud output is text only; it must never be treated as an Android command or as authorization to perform an action.
 - Keep device actions inside the existing local command pipeline and preserve user confirmation for sensitive actions.
-- Before public deployment, add/require authentication at the gateway, enforce HTTPS, configure exact origins, and consider a persistent per-user session store with access controls and retention limits.
+- Production API requests require bearer-token authentication, and HTTPS must be enforced by the hosting platform. Configure exact browser origins if needed, and consider a persistent per-user session store with access controls and retention limits.
 - Provider errors are returned as generic messages; provider response bodies and secrets are not sent to clients.
 - This initial integration is intentionally stateless across server instances. Do not use it as production shared memory until identity, persistence, and retention are designed and tested.
