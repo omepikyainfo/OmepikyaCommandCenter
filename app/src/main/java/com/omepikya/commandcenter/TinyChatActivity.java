@@ -447,8 +447,8 @@ public class TinyChatActivity extends AppCompatActivity {
         if (lower.matches(".*\\b(hi|hello|hey|namaste)\\b.*")) {
             return "Hello! I'm Tiny, running in basic offline mode. I can answer a few built-in prompts without internet, but a local language model is needed for open-ended AI conversations.";
         }
-        if (lower.contains("time")) {
-            return "The current device time is " + java.text.DateFormat.getTimeInstance().format(new java.util.Date()) + ".";
+        if (OfflineCommandRouter.isTimeQuestion(message)) {
+            return OfflineCommandRouter.timeReply(new java.util.Date());
         }
         String calculation = tryCalculate(message);
         if (calculation != null) return calculation;
@@ -470,8 +470,8 @@ public class TinyChatActivity extends AppCompatActivity {
             getPreferences(MODE_PRIVATE).edit().remove("tiny_local_note").apply();
             return "I've cleared the saved Tiny note from this phone.";
         }
-        if (lower.contains("date") || lower.contains("today")) {
-            return "Today's date on this device is " + java.text.DateFormat.getDateInstance().format(new java.util.Date()) + ".";
+        if (OfflineCommandRouter.isDateQuestion(message)) {
+            return OfflineCommandRouter.dateReply(new java.util.Date());
         }
         if (lower.contains("offline") || lower.contains("internet") || lower.contains("render")) {
             return "Tiny is currently using on-device basic replies. No Render server or internet connection is required for this fallback. Rich, open-ended conversation still needs an embedded on-device language model, which is not installed yet.";
