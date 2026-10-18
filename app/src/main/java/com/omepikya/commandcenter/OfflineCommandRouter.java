@@ -17,6 +17,13 @@ public final class OfflineCommandRouter {
 
     private OfflineCommandRouter() { }
 
+    /** App-private persistence supplied by the Android layer; tests can use an in-memory store. */
+    public interface NoteStore {
+        String read();
+        void save(String note);
+        void clear();
+    }
+
     /** Accepts one binary operation only. It never evaluates user-provided code. */
     public static String tryCalculate(String message) {
         if (message == null) return null;
@@ -85,6 +92,35 @@ public final class OfflineCommandRouter {
 
     public static String dateReply(Date now) {
         return "Today's date on this device is " + DateFormat.getDateInstance().format(now) + ".";
+    }
+
+    /**
+     * Handles the existing single-note commands without Android dependencies.
+     * Returns null when the message is not a note command.
+     */
+    public static String handleNoteCommand(String message, NoteStore store) {
+        if (message == null || store == null) return null;
+        String trimmed = message.trim();
+        String lower = trimmed.toLowerCase(Locale.ROOT);
+
+        if (lower.startsWith("remember that ")) {
+            String note = trimmed.substring("remember that ".length()).trim();
+            if (note.isEmpty()) return null;
+            store.save(note);
+            return "Saved privately on this phone: " + note;
+        }
+        if (lower.contains("what do you remember")
+                || lower.contains("what did i ask you to remember")) {
+            String note = store.read();
+            return note == null || note.trim().isEmpty()
+                    ? "I don't have a saved note yet. Say: remember that [your note]."
+                    : "Your saved note on this phone is: " + note;
+        }
+        if (lower.contains("forget what i asked you to remember") || lower.equals("forget that")) {
+            store.clear();
+            return "I've cleared the saved Tiny note from this phone.";
+        }
+        return null;
     }
 
     /** Small, honest identity/help responses; null means this helper does not handle the prompt. */
