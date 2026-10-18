@@ -1077,6 +1077,18 @@ public class CommandView {
         setStatus(voiceStatus, ready ? "READY" : "UNAVAILABLE", ready);
     }
 
+    /** Shows the actual recognition mode without overstating offline support. */
+    public void setVoiceRecognitionMode(boolean available, boolean onDevice) {
+        if (voiceStatus == null) return;
+        if (!available) {
+            voiceStatus.setText("UNAVAILABLE");
+            voiceStatus.setTextColor(0xFFB3261E);
+            return;
+        }
+        voiceStatus.setText(onDevice ? "READY - ON-DEVICE" : "READY - SYSTEM SERVICE");
+        voiceStatus.setTextColor(onDevice ? 0xFF16834B : 0xFF9A6700);
+    }
+
     public void setAutomationStatus(boolean ready) {
         setStatus(automationStatus, ready ? "READY" : "UNAVAILABLE", ready);
     }
