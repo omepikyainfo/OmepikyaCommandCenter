@@ -476,6 +476,8 @@ public class TinyChatActivity extends AppCompatActivity {
         if (lower.contains("offline") || lower.contains("internet") || lower.contains("render")) {
             return "Tiny is currently using on-device basic replies. No Render server or internet connection is required for this fallback. Rich, open-ended conversation still needs an embedded on-device language model, which is not installed yet.";
         }
+        String routedHelp = OfflineCommandRouter.helpReply(message);
+        if (routedHelp != null) return routedHelp;
         if (lower.contains("help") || lower.contains("what can you do")) {
             return "Offline Tiny can respond to greetings, date/time questions, and explain its current mode. For broader questions, we need to integrate and install a compatible on-device language model.";
         }
@@ -487,46 +489,7 @@ public class TinyChatActivity extends AppCompatActivity {
      * It does not evaluate scripts or execute arbitrary input.
      */
     private String tryCalculate(String message) {
-        String expression = message.toLowerCase(Locale.ROOT)
-                .replace("calculate", "")
-                .replace("what is", "")
-                .replace("how much is", "")
-                .replace("divided by", "/")
-                .replace("multiplied by", "*")
-                .replace("plus", "+")
-                .replace("minus", "-")
-                .replace("times", "*")
-                .replace(" ", "")
-                .replace("?", "");
-        java.util.regex.Matcher matcher = java.util.regex.Pattern
-                .compile("^(-?\\d+(?:\\.\\d+)?)([+*/-])(-?\\d+(?:\\.\\d+)?)$")
-                .matcher(expression);
-        if (!matcher.matches()) return null;
-
-        final double left;
-        final double right;
-        try {
-            left = Double.parseDouble(matcher.group(1));
-            right = Double.parseDouble(matcher.group(3));
-        } catch (NumberFormatException ignored) {
-            return "I couldn't read those numbers.";
-        }
-
-        double result;
-        switch (matcher.group(2)) {
-            case "+": result = left + right; break;
-            case "-": result = left - right; break;
-            case "*": result = left * right; break;
-            case "/":
-                if (right == 0.0) return "Division by zero is undefined.";
-                result = left / right;
-                break;
-            default: return null;
-        }
-        if (Double.isNaN(result) || Double.isInfinite(result)) {
-            return "That calculation is outside the supported range.";
-        }
-        return "The answer is " + new java.text.DecimalFormat("0.##########").format(result) + ".";
+        return OfflineCommandRouter.tryCalculate(message);
     }
 
     private String readFully(InputStream stream) throws Exception {
