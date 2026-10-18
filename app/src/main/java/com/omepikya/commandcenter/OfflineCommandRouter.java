@@ -2,6 +2,8 @@ package com.omepikya.commandcenter;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.text.DateFormat;
+import java.util.Date;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -54,6 +56,28 @@ public final class OfflineCommandRouter {
             return "That calculation is outside the supported range.";
         }
         return "The answer is " + new DecimalFormat("0.##########", DecimalFormatSymbols.getInstance(Locale.US)).format(result) + ".";
+    }
+
+    /** Avoid treating unrelated words such as "sometimes" as time questions. */
+    public static boolean isTimeQuestion(String message) {
+        if (message == null) return false;
+        String lower = message.trim().toLowerCase(Locale.ROOT);
+        return lower.matches(".*\\\\b(time|clock)\\\\b.*")
+                || lower.matches(".*\\\\b(what time is it|current time|tell me the time)\\\\b.*");
+    }
+
+    public static boolean isDateQuestion(String message) {
+        if (message == null) return false;
+        String lower = message.trim().toLowerCase(Locale.ROOT);
+        return lower.matches(".*\\\\b(date|today|day is it)\\\\b.*");
+    }
+
+    public static String timeReply(Date now) {
+        return "The current device time is " + DateFormat.getTimeInstance().format(now) + ".";
+    }
+
+    public static String dateReply(Date now) {
+        return "Today's date on this device is " + DateFormat.getDateInstance().format(now) + ".";
     }
 
     /** Small, honest identity/help responses; null means this helper does not handle the prompt. */
