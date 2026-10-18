@@ -12,6 +12,8 @@ import java.util.regex.Pattern;
 public final class OfflineCommandRouter {
     private static final Pattern ARITHMETIC = Pattern
             .compile("^(-?\\d+(?:\\.\\d+)?)([+*/-])(-?\\d+(?:\\.\\d+)?)$");
+    private static final Pattern TIME_WORD = Pattern.compile("\\b(time|clock)\\b");
+    private static final Pattern DATE_WORD = Pattern.compile("\\b(date|today)\\b");
 
     private OfflineCommandRouter() { }
 
@@ -62,14 +64,19 @@ public final class OfflineCommandRouter {
     public static boolean isTimeQuestion(String message) {
         if (message == null) return false;
         String lower = message.trim().toLowerCase(Locale.ROOT);
-        return lower.matches(".*\\\\b(time|clock)\\\\b.*")
-                || lower.matches(".*\\\\b(what time is it|current time|tell me the time)\\\\b.*");
+        return TIME_WORD.matcher(lower).find()
+                || lower.contains("what time is it")
+                || lower.contains("current time")
+                || lower.contains("tell me the time");
     }
 
+    /** Recognize date requests without matching unrelated words such as "database". */
     public static boolean isDateQuestion(String message) {
         if (message == null) return false;
         String lower = message.trim().toLowerCase(Locale.ROOT);
-        return lower.matches(".*\\\\b(date|today|day is it)\\\\b.*");
+        return DATE_WORD.matcher(lower).find()
+                || lower.contains("what day is it")
+                || lower.contains("which day is it");
     }
 
     public static String timeReply(Date now) {
