@@ -72,10 +72,9 @@ public class TinyChatActivity extends AppCompatActivity {
             if (ttsReady) textToSpeech.setLanguage(Locale.getDefault());
         });
         if (getApiBase().isEmpty()) {
-            setStatus("Set your private Tiny API to start chatting.", false);
-            showApiSettings(true);
+            setStatus("Offline mode · basic local replies", true);
         } else {
-            setStatus("API endpoint saved · connect by sending a message", false);
+            setStatus("Cloud API configured · tap ⚙ to switch", true);
         }
         addWelcome();
     }
@@ -224,7 +223,7 @@ public class TinyChatActivity extends AppCompatActivity {
         TextView heading = label("What can I help with?", 19, INK, Typeface.BOLD);
         heading.setGravity(Gravity.CENTER);
         card.addView(heading);
-        TextView body = label("Ask a question, think through an idea, or dictate a message. Tiny needs a configured, reachable API to reply.", 13, MUTED, Typeface.NORMAL);
+        TextView body = label("Tiny starts locally without a server. Basic offline replies work now; richer local AI requires an on-device model.", 13, MUTED, Typeface.NORMAL);
         body.setGravity(Gravity.CENTER);
         body.setPadding(0, dp(7), 0, dp(14));
         card.addView(body);
@@ -288,16 +287,16 @@ public class TinyChatActivity extends AppCompatActivity {
         fields.addView(token);
         new AlertDialog.Builder(this)
                 .setTitle("Connect Tiny")
-                .setMessage("Enter the base URL of your trusted Tiny API. Do not add /api/tiny/chat. Remote servers must use HTTPS; do not connect to an unauthenticated public endpoint.")
+                 .setMessage("Optional cloud mode. Leave the URL empty to use local offline replies. Remote servers must use HTTPS and a trusted authenticated endpoint.")
                 .setView(fields)
                 .setCancelable(!firstRun)
-                .setNegativeButton(firstRun ? "SKIP FOR NOW" : "CANCEL", (dialog, which) -> {
-                    if (firstRun && getApiBase().isEmpty()) setStatus("API not configured · tap ⚙ to connect", false);
+                 .setNegativeButton(firstRun ? "USE OFFLINE" : "CANCEL", (dialog, which) -> {
+                    if (firstRun && getApiBase().isEmpty()) setStatus("Offline mode · basic local replies", true);
                 })
                 .setPositiveButton("SAVE ENDPOINT", (dialog, which) -> {
                     String value = endpoint.getText().toString().trim().replaceAll("/+$", "");
-                    if (!validBaseUrl(value)) {
-                        Toast.makeText(this, "Enter a valid HTTPS URL (HTTP is allowed only for localhost).", Toast.LENGTH_LONG).show();
+                    if (!value.isEmpty() && !validBaseUrl(value)) {
+                        Toast.makeText(this, "Enter a valid HTTPS URL (HTTP is allowed only for localhost), or leave it empty for offline mode.", Toast.LENGTH_LONG).show();
                         if (firstRun) showApiSettings(true);
                         return;
                     }
@@ -305,7 +304,9 @@ public class TinyChatActivity extends AppCompatActivity {
                             .putString(API_BASE, value)
                             .putString(API_TOKEN, token.getText().toString().trim())
                             .apply();
-                    setStatus("Endpoint saved · send a message to test it", false);
+                    setStatus(value.isEmpty()
+                            ? "Offline mode · basic local replies"
+                            : "Cloud endpoint saved · send a message to test it", true);
                 })
                 .show();
     }
@@ -360,13 +361,8 @@ public class TinyChatActivity extends AppCompatActivity {
             return;
         }
         String base = getApiBase();
-        if (base.isEmpty()) {
-            showApiSettings(false);
-            setStatus("API not configured", false);
-            return;
-        }
-        if (!validBaseUrl(base)) {
-            setStatus("Saved endpoint is invalid · update API settings", false);
+        if (!base.isEmpty() && !validBaseUrl(base)) {
+            setStatus("Saved endpoint is invalid · tap ⚙ to update it", false);
             return;
         }
 
@@ -374,6 +370,20 @@ public class TinyChatActivity extends AppCompatActivity {
         input.setText("");
         setBusy(true);
         TextView pending = addMessage("Tiny is thinking…", false);
+        if (base.isEmpty()) {
+            executor.execute(() -> {
+                String reply = createLocalReply(message);
+                runOnUiThread(() -> {
+                    pending.setText(reply);
+                    setStatus("Offline mode · local reply", true);
+                    if (speakReplies.isChecked() && ttsReady && textToSpeech != null) {
+                        textToSpeech.speak(reply, TextToSpeech.QUEUE_FLUSH, null, "tiny-local-reply");
+                    }
+                    setBusy(false);
+                });
+            });
+            return;
+        }
         executor.execute(() -> {
             HttpURLConnection connection = null;
             try {
@@ -425,6 +435,31 @@ public class TinyChatActivity extends AppCompatActivity {
                 runOnUiThread(() -> setBusy(false));
             }
         });
+    }
+
+    /**
+     * Deterministic fallback so Tiny remains usable without network.
+     * This is not an LLM; label it honestly as basic offline mode.
+     */
+    private String createLocalReply(String rawMessage) {
+        String message = rawMessage == null ? "" : rawMessage.trim();
+        String lower = message.toLowerCase(Locale.ROOT);
+        if (lower.matches(".*\\b(hi|hello|hey|namaste)\\b.*")) {
+            return "Hello! I'm Tiny, running in basic offline mode. I can answer a few built-in prompts without internet, but a local language model is needed for open-ended AI conversations.";
+        }
+        if (lower.contains("time")) {
+            return "The current device time is " + java.text.DateFormat.getTimeInstance().format(new java.util.Date()) + ".";
+        }
+        if (lower.contains("date") || lower.contains("today")) {
+            return "Today's date on this device is " + java.text.DateFormat.getDateInstance().format(new java.util.Date()) + ".";
+        }
+        if (lower.contains("offline") || lower.contains("internet") || lower.contains("render")) {
+            return "Tiny is currently using on-device basic replies. No Render server or internet connection is required for this fallback. Rich, open-ended conversation still needs an embedded on-device language model, which is not installed yet.";
+        }
+        if (lower.contains("help") || lower.contains("what can you do")) {
+            return "Offline Tiny can respond to greetings, date/time questions, and explain its current mode. For broader questions, we need to integrate and install a compatible on-device language model.";
+        }
+        return "I received: \"" + message + "\". I'm running without a server, but this build only has basic offline responses—not a full local AI model yet. The next step is adding an on-device model compatible with your phone.";
     }
 
     private String readFully(InputStream stream) throws Exception {
