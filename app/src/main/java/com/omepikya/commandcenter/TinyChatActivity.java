@@ -450,6 +450,26 @@ public class TinyChatActivity extends AppCompatActivity {
         if (lower.contains("time")) {
             return "The current device time is " + java.text.DateFormat.getTimeInstance().format(new java.util.Date()) + ".";
         }
+        String calculation = tryCalculate(message);
+        if (calculation != null) return calculation;
+
+        if (lower.startsWith("remember that ")) {
+            String note = message.substring("remember that ".length()).trim();
+            if (!note.isEmpty()) {
+                getPreferences(MODE_PRIVATE).edit().putString("tiny_local_note", note).apply();
+                return "Saved privately on this phone: " + note;
+            }
+        }
+        if (lower.contains("what do you remember") || lower.contains("what did i ask you to remember")) {
+            String note = getPreferences(MODE_PRIVATE).getString("tiny_local_note", "");
+            return note.isEmpty()
+                    ? "I don't have a saved note yet. Say: remember that [your note]."
+                    : "Your saved note on this phone is: " + note;
+        }
+        if (lower.contains("forget what i asked you to remember") || lower.equals("forget that")) {
+            getPreferences(MODE_PRIVATE).edit().remove("tiny_local_note").apply();
+            return "I've cleared the saved Tiny note from this phone.";
+        }
         if (lower.contains("date") || lower.contains("today")) {
             return "Today's date on this device is " + java.text.DateFormat.getDateInstance().format(new java.util.Date()) + ".";
         }
@@ -460,6 +480,53 @@ public class TinyChatActivity extends AppCompatActivity {
             return "Offline Tiny can respond to greetings, date/time questions, and explain its current mode. For broader questions, we need to integrate and install a compatible on-device language model.";
         }
         return "I received: \"" + message + "\". I'm running without a server, but this build only has basic offline responses—not a full local AI model yet. The next step is adding an on-device model compatible with your phone.";
+    }
+
+    /**
+     * Safe, limited calculator: accepts one binary arithmetic operation only.
+     * It does not evaluate scripts or execute arbitrary input.
+     */
+    private String tryCalculate(String message) {
+        String expression = message.toLowerCase(Locale.ROOT)
+                .replace("calculate", "")
+                .replace("what is", "")
+                .replace("how much is", "")
+                .replace("divided by", "/")
+                .replace("multiplied by", "*")
+                .replace("plus", "+")
+                .replace("minus", "-")
+                .replace("times", "*")
+                .replace(" ", "")
+                .replace("?", "");
+        java.util.regex.Matcher matcher = java.util.regex.Pattern
+                .compile("^(-?\\d+(?:\\.\\d+)?)([+*/-])(-?\\d+(?:\\.\\d+)?)$")
+                .matcher(expression);
+        if (!matcher.matches()) return null;
+
+        final double left;
+        final double right;
+        try {
+            left = Double.parseDouble(matcher.group(1));
+            right = Double.parseDouble(matcher.group(3));
+        } catch (NumberFormatException ignored) {
+            return "I couldn't read those numbers.";
+        }
+
+        double result;
+        switch (matcher.group(2)) {
+            case "+": result = left + right; break;
+            case "-": result = left - right; break;
+            case "*": result = left * right; break;
+            case "/":
+                if (right == 0.0) return "Division by zero is undefined.";
+                result = left / right;
+                break;
+            default: return null;
+        }
+        if (Double.isNaN(result) || Double.isInfinite(result)) {
+            return "That calculation is outside the supported range.";
+        }
+        return "The answer is " + new java.text.DecimalFormat("0.##########").format(result) + ".";
     }
 
     private String readFully(InputStream stream) throws Exception {
