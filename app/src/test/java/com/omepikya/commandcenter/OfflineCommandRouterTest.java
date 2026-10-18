@@ -25,4 +25,19 @@ public class OfflineCommandRouterTest {
         assertTrue(OfflineCommandRouter.helpReply("what can you do").contains("on-device language model"));
         assertNull(OfflineCommandRouter.helpReply("tell me a story"));
     }
+    @Test public void recognizesTimeAndDateQuestionsWithoutBroadSubstringMatches() {
+        assertTrue(OfflineCommandRouter.isTimeQuestion("what time is it"));
+        assertTrue(OfflineCommandRouter.isTimeQuestion("tell me the time"));
+        assertFalse(OfflineCommandRouter.isTimeQuestion("sometimes I forget"));
+        assertTrue(OfflineCommandRouter.isDateQuestion("what is today's date"));
+        assertTrue(OfflineCommandRouter.isDateQuestion("what day is it today"));
+        assertFalse(OfflineCommandRouter.isDateQuestion("update my database"));
+    }
+
+    @Test public void formatsDeviceDateAndTimeReplies() {
+        java.util.Date fixed = new java.util.Date(0L);
+        assertTrue(OfflineCommandRouter.timeReply(fixed).startsWith("The current device time is "));
+        assertTrue(OfflineCommandRouter.dateReply(fixed).startsWith("Today's date on this device is "));
+    }
+
 }
