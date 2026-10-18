@@ -407,6 +407,12 @@ public class MainActivity
                 voiceEngine != null
         );
 
+        commandView.setVoiceRecognitionMode(
+                voiceEngine != null,
+                voiceEngine != null
+                        && voiceEngine.isUsingOnDeviceSpeechRecognition()
+        );
+
         commandView.setAutomationStatus(
                 automationCore != null
         );
