@@ -1,6 +1,7 @@
 package com.omepikya.commandcenter;
 
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -52,7 +53,7 @@ public final class OfflineCommandRouter {
         if (Double.isNaN(result) || Double.isInfinite(result)) {
             return "That calculation is outside the supported range.";
         }
-        return "The answer is " + new DecimalFormat("0.##########").format(result) + ".";
+        return "The answer is " + new DecimalFormat("0.##########", DecimalFormatSymbols.getInstance(Locale.US)).format(result) + ".";
     }
 
     /** Small, honest identity/help responses; null means this helper does not handle the prompt. */
