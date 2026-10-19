@@ -81,6 +81,10 @@ public class AutonomousExecutorTest {
         assertEquals(
                 AutonomousGoal.FAILED,
                 plan.getGoal().getStatus());
+        assertFalse(
+                executor.getLastTrace()
+                        .getFailure()
+                        .isRetryable());
     }
 
     @Test
