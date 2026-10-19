@@ -59,7 +59,7 @@ public final class GoalDecomposer {
 
         // Never return a partial plan: reaching the step limit while work remains
         // would let the executor report success after silently dropping user intent.
-        if (!remaining.isEmpty()) {
+        if (!remaining.isEmpty() && result.size() >= maxSteps) {
             return new ArrayList<>();
         }
 
