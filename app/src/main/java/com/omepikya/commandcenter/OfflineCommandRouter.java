@@ -123,6 +123,47 @@ public final class OfflineCommandRouter {
         return null;
     }
 
+
+    /**
+     * Handles simple personal facts such as "my name is Vivek" and "what is my name".
+     * The Android layer supplies a private persistent store; no network is used.
+     */
+    public static String handlePersonalMemoryCommand(String message, NoteStore store) {
+        if (message == null || store == null) return null;
+        String trimmed = message.trim();
+        String lower = trimmed.toLowerCase(Locale.ROOT);
+
+        if (lower.equals("my name is") || lower.equals("call me") || lower.equals("remember my name is")) {
+            return "Tell me the name you\'d like me to remember.";
+        }
+        String[] savePrefixes = {
+                "remember my name is ", "my name is ", "call me "
+        };
+        for (String prefix : savePrefixes) {
+            if (lower.startsWith(prefix)) {
+                String name = trimmed.substring(prefix.length()).trim();
+                String nameLower = name.toLowerCase(Locale.ROOT);
+                if (nameLower.endsWith(", save it")) name = name.substring(0, name.length() - ", save it".length()).trim();
+                else if (nameLower.endsWith(" save it")) name = name.substring(0, name.length() - " save it".length()).trim();
+                if (name.endsWith(".")) name = name.substring(0, name.length() - 1).trim();
+                if (name.isEmpty()) return "Tell me the name you\'d like me to remember.";
+                if (name.length() > 80) return "That name is too long to save. Please keep it under 80 characters.";
+                store.save("name:" + name);
+                return "I'll remember your name is " + name + ". Saved privately on this phone.";
+            }
+        }
+
+        if (lower.matches("^(what is|what's|tell me) my name[?!. ]*$")
+                || lower.matches("^do you know my name[?!. ]*$")) {
+            String saved = store.read();
+            if (saved != null && saved.startsWith("name:") && saved.length() > 5) {
+                return "Your name is " + saved.substring(5) + ".";
+            }
+            return "I don't know your name yet. Say: My name is Vivek, save it.";
+        }
+        return null;
+    }
+
     /** Small, honest identity/help responses; null means this helper does not handle the prompt. */
     public static String helpReply(String message) {
         if (message == null) return null;
