@@ -407,6 +407,16 @@ public class MainActivity
                 voiceEngine != null
         );
 
+        if (voiceEngine != null) {
+            boolean onDeviceAvailable =
+                    VoiceEngine.isOnDeviceSpeechRecognitionAvailable(this);
+            commandView.setVoiceRecognitionMode(
+                    true,
+                    onDeviceAvailable,
+                    voiceEngine.isUsingOnDeviceSpeechRecognition()
+            );
+        }
+
         commandView.setAutomationStatus(
                 automationCore != null
         );
