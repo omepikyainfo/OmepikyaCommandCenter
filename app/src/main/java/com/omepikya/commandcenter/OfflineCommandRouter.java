@@ -2,6 +2,8 @@ package com.omepikya.commandcenter;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.text.DateFormat;
+import java.util.Date;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -10,8 +12,17 @@ import java.util.regex.Pattern;
 public final class OfflineCommandRouter {
     private static final Pattern ARITHMETIC = Pattern
             .compile("^(-?\\d+(?:\\.\\d+)?)([+*/-])(-?\\d+(?:\\.\\d+)?)$");
+    private static final Pattern TIME_WORD = Pattern.compile("\\b(time|clock)\\b");
+    private static final Pattern DATE_WORD = Pattern.compile("\\b(date|today)\\b");
 
     private OfflineCommandRouter() { }
+
+    /** App-private persistence supplied by the Android layer; tests can use an in-memory store. */
+    public interface NoteStore {
+        String read();
+        void save(String note);
+        void clear();
+    }
 
     /** Accepts one binary operation only. It never evaluates user-provided code. */
     public static String tryCalculate(String message) {
@@ -54,6 +65,62 @@ public final class OfflineCommandRouter {
             return "That calculation is outside the supported range.";
         }
         return "The answer is " + new DecimalFormat("0.##########", DecimalFormatSymbols.getInstance(Locale.US)).format(result) + ".";
+    }
+
+    /** Avoid treating unrelated words such as "sometimes" as time questions. */
+    public static boolean isTimeQuestion(String message) {
+        if (message == null) return false;
+        String lower = message.trim().toLowerCase(Locale.ROOT);
+        return TIME_WORD.matcher(lower).find()
+                || lower.contains("what time is it")
+                || lower.contains("current time")
+                || lower.contains("tell me the time");
+    }
+
+    /** Recognize date requests without matching unrelated words such as "database". */
+    public static boolean isDateQuestion(String message) {
+        if (message == null) return false;
+        String lower = message.trim().toLowerCase(Locale.ROOT);
+        return DATE_WORD.matcher(lower).find()
+                || lower.contains("what day is it")
+                || lower.contains("which day is it");
+    }
+
+    public static String timeReply(Date now) {
+        return "The current device time is " + DateFormat.getTimeInstance().format(now) + ".";
+    }
+
+    public static String dateReply(Date now) {
+        return "Today's date on this device is " + DateFormat.getDateInstance().format(now) + ".";
+    }
+
+    /**
+     * Handles the existing single-note commands without Android dependencies.
+     * Returns null when the message is not a note command.
+     */
+    public static String handleNoteCommand(String message, NoteStore store) {
+        if (message == null || store == null) return null;
+        String trimmed = message.trim();
+        String lower = trimmed.toLowerCase(Locale.ROOT);
+
+        if (lower.startsWith("remember that ")) {
+            String note = trimmed.substring("remember that ".length()).trim();
+            if (note.isEmpty()) return null;
+            store.save(note);
+            return "Saved privately on this phone: " + note;
+        }
+        if (lower.contains("what do you remember")
+                || lower.contains("what did i ask you to remember")) {
+            String note = store.read();
+            return note == null || note.trim().isEmpty()
+                    ? "I don't have a saved note yet. Say: remember that [your note]."
+                    : "Your saved note on this phone is: " + note;
+        }
+        if (lower.contains("forget what i asked you to remember") || lower.equals("forget that")) {
+            store.clear();
+            return "I've cleared the saved Tiny note from this phone.";
+        }
+        return null;
     }
 
     /** Small, honest identity/help responses; null means this helper does not handle the prompt. */
