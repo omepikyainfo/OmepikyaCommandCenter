@@ -213,7 +213,7 @@ public final class AutonomousExecutor {
                                 goalText,
                                 result.getMessage(),
                                 command,
-                                !escalation,
+                                false,
                                 escalation,
                                 step.getAttempts()));
 
