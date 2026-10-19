@@ -51,6 +51,14 @@ public class OfflineCommandRouterTest {
                 OfflineCommandRouter.handlePersonalMemoryCommand("My name is Vivek, save it", store));
         assertEquals("Your name is Vivek.",
                 OfflineCommandRouter.handlePersonalMemoryCommand("What is my name", store));
+        assertEquals("I'll remember your name is Mira. Saved privately on this phone.",
+                OfflineCommandRouter.handlePersonalMemoryCommand("Remember my name as Mira", store));
+        assertEquals("Your name is Mira.",
+                OfflineCommandRouter.handlePersonalMemoryCommand("What should you call me?", store));
+        assertEquals("I'll remember your name is Sam. Saved privately on this phone.",
+                OfflineCommandRouter.handlePersonalMemoryCommand("You can call me Sam", store));
+        assertEquals("Your name is Sam.",
+                OfflineCommandRouter.handlePersonalMemoryCommand("What do you call me", store));
     }
 
     @Test public void handlesUnknownNameAndRejectsEmptyName() {
