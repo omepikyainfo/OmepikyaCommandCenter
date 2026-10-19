@@ -12,6 +12,8 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      HAS_RELEASE_SIGNING: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
 
     steps:
       - name: Checkout
@@ -35,6 +37,24 @@ jobs:
       - name: Make Gradle executable
         run: chmod +x gradlew
 
+      - name: Prepare optional release signing
+        if: ${{ env.HAS_RELEASE_SIGNING == 'true' }}
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "$ANDROID_KEYSTORE_PASSWORD" || (echo "Missing ANDROID_KEYSTORE_PASSWORD secret" >&2; exit 1)
+          test -n "$ANDROID_KEY_ALIAS" || (echo "Missing ANDROID_KEY_ALIAS secret" >&2; exit 1)
+          test -n "$ANDROID_KEY_PASSWORD" || (echo "Missing ANDROID_KEY_PASSWORD secret" >&2; exit 1)
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/omepikya-release.keystore"
+          echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/omepikya-release.keystore" >> "$GITHUB_ENV"
+          echo "ANDROID_KEYSTORE_PASSWORD=$ANDROID_KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
+          echo "ANDROID_KEY_ALIAS=$ANDROID_KEY_ALIAS" >> "$GITHUB_ENV"
+          echo "ANDROID_KEY_PASSWORD=$ANDROID_KEY_PASSWORD" >> "$GITHUB_ENV"
+
       - name: Unit tests
         run: ./gradlew test --no-daemon
 
@@ -51,9 +71,18 @@ jobs:
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
-      - name: Upload release APK
+      - name: Upload signed release APK
+        if: ${{ env.HAS_RELEASE_SIGNING == 'true' }}
         uses: actions/upload-artifact@v4
         with:
-          name: omepikya-command-center-release
+          name: omepikya-command-center-release-signed
+          path: app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+
+      - name: Upload unsigned release APK (signing not configured)
+        if: ${{ env.HAS_RELEASE_SIGNING != 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: omepikya-command-center-release-unsigned
           path: app/build/outputs/apk/release/*.apk
           if-no-files-found: error

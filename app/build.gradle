@@ -1,5 +1,12 @@
 apply plugin: 'com.android.application'
 
+// Release signing is enabled only when all four values are supplied by CI/local environment.
+def releaseStorePath = System.getenv('ANDROID_KEYSTORE_PATH')
+def releaseStorePassword = System.getenv('ANDROID_KEYSTORE_PASSWORD')
+def releaseKeyAlias = System.getenv('ANDROID_KEY_ALIAS')
+def releaseKeyPassword = System.getenv('ANDROID_KEY_PASSWORD')
+def releaseSigningConfigured = [releaseStorePath, releaseStorePassword, releaseKeyAlias, releaseKeyPassword].every { it != null && !it.trim().isEmpty() }
+
 android {
     namespace 'com.omepikya.commandcenter'
     compileSdkVersion 34
@@ -13,12 +20,26 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        release {
+            if (releaseSigningConfigured) {
+                storeFile file(releaseStorePath)
+                storePassword releaseStorePassword
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         debug {
             minifyEnabled false
         }
         release {
             minifyEnabled false
+            if (releaseSigningConfigured) {
+                signingConfig signingConfigs.release
+            }
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
