@@ -1077,6 +1077,27 @@ public class CommandView {
         setStatus(voiceStatus, ready ? "READY" : "UNAVAILABLE", ready);
     }
 
+    /**
+     * Shows the actual recognition mode so users can tell whether
+     * voice input is local or may rely on the system's network service.
+     */
+    public void setVoiceRecognitionMode(
+            boolean ready,
+            boolean onDeviceAvailable,
+            boolean usingOnDevice) {
+        if (!ready) {
+            setStatus(voiceStatus, "UNAVAILABLE", false);
+            return;
+        }
+        if (usingOnDevice) {
+            setStatus(voiceStatus, "ON-DEVICE", true);
+        } else if (onDeviceAvailable) {
+            setStatus(voiceStatus, "CHECK MODE", false);
+        } else {
+            setStatus(voiceStatus, "NETWORK FALLBACK", false);
+        }
+    }
+
     public void setAutomationStatus(boolean ready) {
         setStatus(automationStatus, ready ? "READY" : "UNAVAILABLE", ready);
     }
