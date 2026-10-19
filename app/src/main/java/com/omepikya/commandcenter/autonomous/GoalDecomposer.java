@@ -32,6 +32,7 @@ public final class GoalDecomposer {
             if (separator == null) {
 
                 result.add(remaining);
+                remaining = "";
                 break;
             }
 
@@ -50,6 +51,7 @@ public final class GoalDecomposer {
                     right.isEmpty()) {
 
                 result.add(remaining);
+                remaining = "";
                 break;
             }
 
@@ -59,7 +61,7 @@ public final class GoalDecomposer {
 
         // Never return a partial plan: reaching the step limit while work remains
         // would let the executor report success after silently dropping user intent.
-        if (!remaining.isEmpty() && result.size() >= maxSteps) {
+        if (!remaining.isEmpty()) {
             return new ArrayList<>();
         }
 
