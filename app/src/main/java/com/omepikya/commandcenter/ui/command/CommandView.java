@@ -1092,9 +1092,9 @@ public class CommandView {
         if (usingOnDevice) {
             setStatus(voiceStatus, "ON-DEVICE", true);
         } else if (onDeviceAvailable) {
-            setStatus(voiceStatus, "CHECK MODE", false);
+            setStatus(voiceStatus, "OFFLINE NOT GUARANTEED", false);
         } else {
-            setStatus(voiceStatus, "NETWORK FALLBACK", false);
+            setStatus(voiceStatus, "OFFLINE NOT GUARANTEED", false);
         }
     }
 
