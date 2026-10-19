@@ -349,20 +349,10 @@ public class VoiceEngine {
                             return;
                         }
 
-                        synchronized (
-                                VoiceEngine.this
-                        ) {
-
-                            recognitionActive =
-                                    false;
-
-                            startPending =
-                                    false;
-                        }
-
                         /*
-                         * Ignore errors caused by an intentional
-                         * cancellation/restart.
+                         * A cancel/restart can produce onError() followed by
+                         * onComplete(). Preserve a pending replacement start
+                         * until onComplete() consumes that cancellation pair.
                          */
                         boolean wasCancelling;
 
@@ -373,8 +363,10 @@ public class VoiceEngine {
                             wasCancelling =
                                     cancellingRecognition;
 
-                            cancellingRecognition =
-                                    false;
+                            if (!wasCancelling) {
+                                recognitionActive = false;
+                                startPending = false;
+                            }
                         }
 
                         if (wasCancelling) {
@@ -399,11 +391,18 @@ public class VoiceEngine {
                                 VoiceEngine.this
                         ) {
 
-                            recognitionActive =
-                                    false;
+                            /*
+                             * Consume the completion callback paired with an
+                             * intentional cancel. Do not clear startPending:
+                             * it may represent the replacement session.
+                             */
+                            if (cancellingRecognition) {
+                                cancellingRecognition = false;
+                                return;
+                            }
 
-                            startPending =
-                                    false;
+                            recognitionActive = false;
+                            startPending = false;
                         }
 
                         /*
