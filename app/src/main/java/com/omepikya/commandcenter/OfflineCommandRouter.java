@@ -133,14 +133,20 @@ public final class OfflineCommandRouter {
         String trimmed = message.trim();
         String lower = trimmed.toLowerCase(Locale.ROOT);
 
+        if (lower.equals("my name is") || lower.equals("call me") || lower.equals("remember my name is")) {
+            return "Tell me the name you\'d like me to remember.";
+        }
         String[] savePrefixes = {
-                "my name is ", "call me ", "remember my name is "
+                "remember my name is ", "my name is ", "call me "
         };
         for (String prefix : savePrefixes) {
             if (lower.startsWith(prefix)) {
                 String name = trimmed.substring(prefix.length()).trim();
+                String nameLower = name.toLowerCase(Locale.ROOT);
+                if (nameLower.endsWith(", save it")) name = name.substring(0, name.length() - ", save it".length()).trim();
+                else if (nameLower.endsWith(" save it")) name = name.substring(0, name.length() - " save it".length()).trim();
                 if (name.endsWith(".")) name = name.substring(0, name.length() - 1).trim();
-                if (name.isEmpty()) return "Tell me the name you'd like me to remember.";
+                if (name.isEmpty()) return "Tell me the name you\'d like me to remember.";
                 if (name.length() > 80) return "That name is too long to save. Please keep it under 80 characters.";
                 store.save("name:" + name);
                 return "I'll remember your name is " + name + ". Saved privately on this phone.";
