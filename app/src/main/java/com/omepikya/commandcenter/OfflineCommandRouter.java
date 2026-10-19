@@ -137,7 +137,8 @@ public final class OfflineCommandRouter {
             return "Tell me the name you\'d like me to remember.";
         }
         String[] savePrefixes = {
-                "remember my name is ", "my name is ", "call me "
+                "remember my name is ", "remember my name as ",
+                "my name is ", "you can call me ", "call me "
         };
         for (String prefix : savePrefixes) {
             if (lower.startsWith(prefix)) {
@@ -154,7 +155,9 @@ public final class OfflineCommandRouter {
         }
 
         if (lower.matches("^(what is|what's|tell me) my name[?!. ]*$")
-                || lower.matches("^do you know my name[?!. ]*$")) {
+                || lower.matches("^do you know my name[?!. ]*$")
+                || lower.matches("^what should you call me[?!. ]*$")
+                || lower.matches("^what do you call me[?!. ]*$")) {
             String saved = store.read();
             if (saved != null && saved.startsWith("name:") && saved.length() > 5) {
                 return "Your name is " + saved.substring(5) + ".";
