@@ -40,4 +40,30 @@ public class OfflineCommandRouterTest {
         assertTrue(OfflineCommandRouter.dateReply(fixed).startsWith("Today's date on this device is "));
     }
 
+    @Test public void savesAndRecallsPersonalNameOffline() {
+        final String[] stored = {""};
+        OfflineCommandRouter.NoteStore store = new OfflineCommandRouter.NoteStore() {
+            @Override public String read() { return stored[0]; }
+            @Override public void save(String note) { stored[0] = note; }
+            @Override public void clear() { stored[0] = ""; }
+        };
+        assertEquals("I'll remember your name is Vivek. Saved privately on this phone.",
+                OfflineCommandRouter.handlePersonalMemoryCommand("My name is Vivek, save it", store));
+        assertEquals("Your name is Vivek.",
+                OfflineCommandRouter.handlePersonalMemoryCommand("What is my name", store));
+    }
+
+    @Test public void handlesUnknownNameAndRejectsEmptyName() {
+        final String[] stored = {""};
+        OfflineCommandRouter.NoteStore store = new OfflineCommandRouter.NoteStore() {
+            @Override public String read() { return stored[0]; }
+            @Override public void save(String note) { stored[0] = note; }
+            @Override public void clear() { stored[0] = ""; }
+        };
+        assertTrue(OfflineCommandRouter.handlePersonalMemoryCommand("what is my name", store)
+                .contains("I don't know your name yet"));
+        assertEquals("Tell me the name you'd like me to remember.",
+                OfflineCommandRouter.handlePersonalMemoryCommand("my name is ", store));
+    }
+
 }
