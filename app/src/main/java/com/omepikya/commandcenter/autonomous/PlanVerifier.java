@@ -53,41 +53,9 @@ public final class PlanVerifier {
             }
         }
 
-        /*
-         * Detect duplicate commands.
-         */
-        for (int i = 0;
-             i < plan.getSteps().size();
-             i++) {
-
-            String first =
-                    plan.getSteps()
-                            .get(i)
-                            .getCommand();
-
-            if (first == null) {
-                return false;
-            }
-
-            for (int j = i + 1;
-                 j < plan.getSteps().size();
-                 j++) {
-
-                String second =
-                        plan.getSteps()
-                                .get(j)
-                                .getCommand();
-
-                if (second != null &&
-                        first.trim()
-                                .equalsIgnoreCase(
-                                        second.trim())) {
-
-                    return false;
-                }
-            }
-        }
-
+        // Repeated commands are valid user intent (for example, two
+        // volume-up actions). Validate each step, not uniqueness.
+        
         return true;
     }
 
