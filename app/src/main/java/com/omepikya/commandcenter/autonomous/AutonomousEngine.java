@@ -131,6 +131,19 @@ public final class AutonomousEngine {
                 return result;
             }
 
+            /*
+             * Replanning currently copies the failed step into the
+             * replacement plan. Until handlers can explicitly classify
+             * a failure as safe to retry, stop instead of repeating a
+             * command that may already have produced a side effect.
+             */
+            ExecutionTrace trace = executor.getLastTrace();
+            if (trace == null ||
+                    trace.getFailure() == null ||
+                    !trace.getFailure().isRetryable()) {
+                return result;
+            }
+
             if (!replanner.canReplan(
                     replans) ||
                     replans >= maxReplans) {
