@@ -244,6 +244,12 @@ public final class AutonomousPersistence {
                             "cursor",
                             0));
 
+            // Restore cancellation explicitly. Without this, a cancelled
+            // saved plan would load as active and could execute on resume.
+            if (root.optBoolean("cancelled", false)) {
+                plan.cancel();
+            }
+
             return plan;
 
         } catch (Exception ignored) {

@@ -131,6 +131,19 @@ public final class AutonomousEngine {
                 return result;
             }
 
+            /*
+             * Replanning currently copies the failed step into the
+             * replacement plan. Until handlers can explicitly classify
+             * a failure as safe to retry, stop instead of repeating a
+             * command that may already have produced a side effect.
+             */
+            ExecutionTrace trace = executor.getLastTrace();
+            if (trace == null ||
+                    trace.getFailure() == null ||
+                    !trace.getFailure().isRetryable()) {
+                return result;
+            }
+
             if (!replanner.canReplan(
                     replans) ||
                     replans >= maxReplans) {
@@ -187,6 +200,20 @@ public final class AutonomousEngine {
 
             return CommandResult.failure(
                     "The saved autonomous task was cancelled.");
+        }
+
+        String savedStatus = plan.getGoal().getStatus();
+
+        // A failed step may have performed a side effect before its handler
+        // returned an error. Do not repeat it blindly after process restart.
+        if (AutonomousGoal.FAILED.equals(savedStatus)) {
+            return CommandResult.failure(
+                    "The saved task failed at a step. It was not resumed automatically to avoid repeating an action that may already have taken effect.");
+        }
+
+        if (AutonomousGoal.WAITING_CONFIRMATION.equals(savedStatus)) {
+            return CommandResult.failure(
+                    "The saved task is waiting for confirmation and cannot be resumed automatically.");
         }
 
         return executor.execute(
