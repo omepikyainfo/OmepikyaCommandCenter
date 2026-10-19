@@ -453,6 +453,20 @@ public class TinyChatActivity extends AppCompatActivity {
         String calculation = tryCalculate(message);
         if (calculation != null) return calculation;
 
+        String personalMemoryReply = OfflineCommandRouter.handlePersonalMemoryCommand(message,
+                new OfflineCommandRouter.NoteStore() {
+                    @Override public String read() {
+                        return getPreferences(MODE_PRIVATE).getString("tiny_personal_name", "");
+                    }
+                    @Override public void save(String value) {
+                        getPreferences(MODE_PRIVATE).edit().putString("tiny_personal_name", value).apply();
+                    }
+                    @Override public void clear() {
+                        getPreferences(MODE_PRIVATE).edit().remove("tiny_personal_name").apply();
+                    }
+                });
+        if (personalMemoryReply != null) return personalMemoryReply;
+
         if (lower.startsWith("remember that ")) {
             String note = message.substring("remember that ".length()).trim();
             if (!note.isEmpty()) {
